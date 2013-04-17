@@ -8,7 +8,7 @@ bmx-dotnetrecipes
 
 Copyright (c) 2013 Inedo, LLC. All rights reserved.
 
-http://inedo.com/buildmaster/extensions/.NET
+http://inedo.com/buildmaster/extensions/.NET+Recipes
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
