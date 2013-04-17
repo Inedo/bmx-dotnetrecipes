@@ -1,0 +1,69 @@
+﻿<style type="text/css">
+	.bitchecker-container { display: none; }
+    .bitchecker-container h1 { margin-bottom: 10px; }
+    .bitchecker-container p { font-size: 110%; margin-top:0px; }
+    .bitchecker-container .superEmphasizedText { font-size: 120%; color: #AA3915; font-weight: bold; }
+    .bitchecker-container h2 { margin-top: 20px; margin-bottom:0px; }
+
+    .bitchecker-container .superBuildButton { width:450px; margin:20px auto; border-width: 2px; box-shadow: 3px 3px 5px #777; -moz-box-shadow: 3px 3px 5px #777; -webkit-box-shadow: 3px 3px 5px #777; font-size:32px;font-weight:bold; height:64px; }
+    .bitchecker-container .superBuildButton img {display:block;float:left;width:64px;height: 64px;}
+    .bitchecker-container .superBuildButton > div { margin-right:10px;text-align: center; line-height:64px }
+</style>
+
+<div class="bitchecker-container-opener">
+	Looking for the original welcome text? <a href="#" onclick="$('.bitchecker-container').slideDown('slow');$(this).parent().hide();return false;">Click here to show it</a>.
+</div>
+<div class="bitchecker-container">
+
+	<h1>Let's get started with BuildMaster!</h1>
+	<p>Don't worry. This is quite possibly the quickest product tour ever. In fact, if you want to stop reading and start exploring now, then just click that big <em>Create New Build</em> button below. We don't mind.</p>
+
+	<div class="button superBuildButton">
+		<img title="Create New Build" alt="Create New Build" src="/0x44/InedoLib/Inedo.Web.Controls.IconImage/ProcessImageRequest/InedoIcons/Virtuallnk/128x128/CD.png" />
+		<div>Create New Build &raquo;</div>
+	</div>
+	<script type="text/javascript">$(function () { if(!window.a) $('.superBuildButton').click(function () { window.location = 'Builds/CreateNewBuild.aspx?autoCreate=y'; return false; }); window.a = true; });</script>
+
+	<h2>Applications and BuildMaster</h2>
+	<p>Projects in BuildMaster are organized as <em>applications</em>, and each application has its own releases, builds, deployment plans, configuration files, dependencies, database changes, etc. You can of course share some things between applications, but we'll look at that later.</p>
+	<p>You are actually viewing the (slightly tweaked) application overview page for an Application called BitChecker. As soon as you create a build of BitChecker by using that big button on the side, the application navigation bars will be displayed.</p>
+	
+	<hr />
+	<h2>About BitChecker</h2>
+	<div style="float: right;margin:0 0 10px 10px"><img src="/extension-resources/DotNetRecipes/bitchecker-screen.png" title="BitChecker" alt="BitChecker" /></div>
+	<p style="margin-top:0px">BitChecker is a very simple ASP.NET web application that demonstrates some of the features of BuildMaster, and requires no additional files, configuration, tools to build. This application consists of two major architectural components, or <em>deployables</em> as they're called in BuildMaster:</p>
+	<ul><li><b>Web Application</b>: the front-end code</li><li><b>Database</b>: back-end storage</li></ul>
+
+	<p>Of course, the application code itself doesn't actually connect to the database, but it represents how you would configure an application that does. Generally, database connectivity is managed by configuration files: .config (.NET convention), .properties (Java), .xml, etc.</p>
+	<p>The configuration file we've set-up for BitChecker illustrates how you'd manage the different instances for the different environments. As for the database changes themselves, those are also represented in this example.</p>
+
+	<p>All that said, it's high time we create a build. Just click that big <em>Create New Build</em> button above and watch the magic happen.
+
+<!--
+	<hr />	
+	<h2>Build and Deployment Strategy</h2>
+	<p>Most applications will follow a similar build and deploy strategy that BitChecker does. After creating a first build, you can explore how we've set this up by going to Deployment Plans.</p>
+	<ol>
+		<li>Label or Tag Files in Source Control</li>
+		<li>Get Files from Label</li>
+		<li>Compile Source Code</li>
+		<li>Run Unit Tests and perform other code analysis</li>
+		<li>Create Artifact</li>
+		<li>Stop Website</li>
+		<li>Deploy Artifact</li>
+		<li>Deploy Configuration File</li>
+		<li>Deploy Database Changes</li>
+		<li>Start Website</li>
+	</ol>
+	
+	<p>All of these steps only occur in the first environment. Later environments (such as Test, Staging, QA, etc) generally do the following.</p>
+	<ol>
+		<li>Stop Website</li>
+		<li>Deploy Artifact</li>
+		<li>Deploy Configuration File</li>
+		<li>Deploy Database Changes</li>
+		<li>Start Website</li>
+	</ol>
+	<div style="clear: right;"></div>
+-->
+</div>
