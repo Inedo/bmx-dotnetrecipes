@@ -96,7 +96,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
             // Create build in old release
 
-            StoredProcs.Builds_CreateBuild(this.ApplicationId, "1.0", "Y", "Y", DateTime.Now, null, null, null).Execute();
+            StoredProcs.Builds_CreateBuild(this.ApplicationId, "1.0", "Y", "Y", DateTime.Now, null, null, null, null).Execute();
 
             // auto-promote build until old release is deployed
             for (int i = 0; i < workflowSteps.Rows.Count - 1; i++)
@@ -109,7 +109,8 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     DateTime.Now,
                     "Y",
                     "N",
-                    (int)workflowSteps.Rows[i][TableDefs.WorkflowSteps_Extended.Next_Environment_Id]).ExecuteNonQuery();
+                    (int)workflowSteps.Rows[i][TableDefs.WorkflowSteps_Extended.Next_Environment_Id],
+                    null).ExecuteNonQuery();
             }
 
             // Create Release
@@ -413,6 +414,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 planId,
                 null,
                 action is RemoteActionBase ? (int?)1 : null,
+                null,
                 action.ToString(),
                 Domains.YN.No,
                 Util.Persistence.SerializeToPersistedObjectXml(action),
@@ -449,6 +451,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     deployableId,
                     environmentId,
                     this.ApplicationId,
+                    null,
                     null,
                     null,
                     Domains.YN.Yes,

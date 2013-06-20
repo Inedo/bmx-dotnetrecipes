@@ -195,6 +195,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     this.ApplicationId,
                     null,
                     null,
+                    null,
                     Domains.YN.Yes,
                     planName,
                     null,
@@ -209,6 +210,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 .Plans_CreateOrUpdateAction(
                     planId, null,
                     action is RemoteActionBase ? (int?)1 : null,
+                    null,
                     action.ToString(),
                     Domains.YN.No,
                     Util.Persistence.SerializeToPersistedObjectXml(action),
