@@ -110,7 +110,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     "Y",
                     "N",
                     (int)workflowSteps.Rows[i][TableDefs.WorkflowSteps_Extended.Next_Environment_Id],
-                    null).ExecuteNonQuery();
+                    null, null).ExecuteNonQuery();
             }
 
             // Create Release
