@@ -29,14 +29,6 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
         public bool UseClickOnce { get; set; }
         public string ClickOnceUrl { get; set; }
 
-        public string DashboardText
-        {
-            get
-            {
-                return new StreamReader(GetType().Assembly.GetManifestResourceStream("Inedo.BuildMasterExtensions.DotNetRecipes.CalculatorDashboard.html")).ReadToEnd();
-            }
-        }
-
         public string ApplicationName { get; set; }
         public string ApplicationGroup { get; set; }
         public int ApplicationId { get; set; }
@@ -91,14 +83,14 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
                 // Source
                 planId = CreatePlan(deployableId, environmentId, "Source");
-                AddAction(planId,MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLatestAction", new
                     {
                         OverriddenTargetDirectory = @"~\Source",
                         SourcePath = "/TRUNK/MiniCalc/",
                         ProviderId = this.ScmProviderId
                     }));
-                AddAction(planId,MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Files.ReplaceFileAction", new
                     {
                         FileNameMasks = new[]{ "AssemblyInfo.cs" },
@@ -107,7 +99,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                         ReplaceText = "Version(\"%RELNO%.0.%BLDNO%\")",
                         UseRegex = false
                     }));
-                AddAction(planId,MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Artifacts.CreateArtifactAction", new
                     {
                         OverriddenSourceDirectory = @"~\Source",
@@ -117,7 +109,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 // Build
                 planId = CreatePlan(deployableId, environmentId, "Build");
                 AddAction(planId,
-                    (ActionBase)MungeUtil.MungeInstance("Inedo.BuildMasterExtensions.DotNet2.BuildNetAppAction,DotNet2",
+                    (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.DotNet2.BuildNetAppAction,DotNet2",
                     new
                     {
                         OverriddenSourceDirectory = @"~\Source",
@@ -129,7 +121,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 if (UseClickOnce)
                 {
                     AddAction(planId,
-                        (ActionBase)MungeUtil.MungeInstance("Inedo.BuildMasterExtensions.DotNet2.ClickOnceAction,DotNet2",
+                        (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.DotNet2.ClickOnceAction,DotNet2",
                         new
                         {
                             OverriddenSourceDirectory = @"~\BuildOutput",
@@ -140,7 +132,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                             CertificatePassword = "password"
                         }));
                 }
-                AddAction(planId,MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Artifacts.CreateArtifactAction", new
                     {
                         OverriddenSourceDirectory = @"~\BuildOutput",
@@ -149,7 +141,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
                 // Deploy
                 planId = CreatePlan(deployableId, environmentId, "Deploy");
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Files.TransferFilesAction",new
                     {
                         IncludeFileMasks = new[] { "*" },
@@ -169,7 +161,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
                 // Deploy
                 planId = CreatePlan(deployableId, environmentId, "Deploy");
-                AddAction(planId,MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Artifacts.DeployArtifactAction",new
                     {
                         ArtifactName = "App",
@@ -217,7 +209,10 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     Util.Reflection.GetCustomAttribute<ActionPropertiesAttribute>(action.GetType()).Name,
                     Domains.YN.Yes,
                     0,
-                    "N");
+                    "N",
+                    null,
+                    null,
+                    null);
             proc.ExecuteNonQuery();
             return proc.Action_Sequence.Value;
         }

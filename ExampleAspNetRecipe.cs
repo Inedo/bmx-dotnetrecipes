@@ -167,21 +167,21 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
                 // Source
                 planId = CreatePlan(deployableId, environmentId, "Source", Properties.Resources.BitChecker_GetSource);
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.ApplyLabelAction", new
                     {
                         SourcePath = "/TRUNK/BitChecker/",
                         UserDefinedLabel = "%RELNO%.%BLDNO%",
                         ProviderId = this.ScmProviderId
                     }));
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction", new
                     {
                         SourcePath = "/TRUNK/BitChecker/",
                         UserDefinedLabel = "%RELNO%.%BLDNO%",
                         ProviderId = this.ScmProviderId
                     }));
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Files.ReplaceFileAction", new
                     {
                         FileNameMasks = new[] { "AssemblyInfo.cs" },
@@ -193,7 +193,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
                 // Compare Source
                 planId = CreatePlan(deployableId, environmentId, "Compare Source", Properties.Resources.BitChecker_CompareSource);
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction", new
                     {
                         SourcePath = "/TRUNK/BitChecker/",
@@ -201,7 +201,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                         ProviderId = this.ScmProviderId,
                         OverriddenTargetDirectory = "PrevSrc"
                     }));
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction", new
                     {
                         SourcePath = "/TRUNK/BitChecker/",
@@ -209,26 +209,26 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                         ProviderId = this.ScmProviderId,
                         OverriddenTargetDirectory = "CurrentSrc"
                     }));
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Reporting.CompareDirectoriesReportingAction", new
                     {
                         IncludeUnchanged = false,
-                        OverriddenSourceDirectory = "PrevSrc",
-                        OverriddenTargetDirectory = "CurrentSrc",
+                        Path1 = "PrevSrc",
+                        Path2 = "CurrentSrc",
                         OutputName = "Changes Between %PREVRELNO%.%PREVBLDNO% and %RELNO%.%BLDNO%"
                     }));
 
                 // Build
                 planId = CreatePlan(deployableId, environmentId, "Build", Properties.Resources.BitChecker_Build);
                 AddAction(planId,
-                    (ActionBase)MungeUtil.MungeInstance("Inedo.BuildMasterExtensions.DotNet2.BuildNetAppAction,DotNet2",
+                    (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.DotNet2.BuildNetAppAction,DotNet2",
                     new
                     {
                         IsWebProject = true,
                         ProjectBuildConfiguration = "Debug",
                         ProjectPath = "BitChecker.csproj"
                     }));
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Artifacts.CreateArtifactAction", new
                     {
                         ArtifactName = "Web"
@@ -239,7 +239,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
                 // Deploy Web
                 planId = CreatePlan(deployableId, environmentId, "Deploy Web", Properties.Resources.BitChecker_DeployWeb);
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Files.TransferFilesAction", new
                     {
                         IncludeFileMasks = new[] { "*", "!web_appSettings.config" },
@@ -249,7 +249,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                         TargetDirectory = Path.Combine(this.DeploymentPath, environmentName),
                         TargetServerId = 1
                     }));
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Configuration.DeployConfigurationFileAction", new
                     {
                         ConfigurationFileId = configurationFileId,
@@ -259,7 +259,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
                 // Deploy Database
                 planId = CreatePlan(databaseDeployableId, environmentId, "Deploy Database", Properties.Resources.BitChecker_DeployDatabase);
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Database.ExecuteDatabaseChangeScriptsAction", new
                     {
                         ProviderId = databaseProviderId
@@ -274,13 +274,13 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
                 // Deploy Web
                 planId = CreatePlan(deployableId, environmentId, "Deploy Web", Properties.Resources.BitChecker_DeployWeb);
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Artifacts.DeployArtifactAction", new
                     {
                         ArtifactName = "Web",
                         OverriddenTargetDirectory = Path.Combine(this.DeploymentPath, environmentName)
                     }));
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Configuration.DeployConfigurationFileAction", new
                     {
                         ConfigurationFileId = configurationFileId,
@@ -290,7 +290,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
                 // Deploy Database
                 planId = CreatePlan(databaseDeployableId, environmentId, "Deploy Database", Properties.Resources.BitChecker_DeployDatabase);
-                AddAction(planId, MungeUtil.MungeCoreExAction(
+                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Database.ExecuteDatabaseChangeScriptsAction", new
                     {
                         ProviderId = databaseProviderId
@@ -312,7 +312,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 }
 
                 int dashboardId = (int)StoredProcs.Dashboards_GetDashboard(this.ApplicationId, Domains.DashboardScopes.Application).ExecuteDataRow()[TableDefs.Dashboards.Dashboard_Id];
-                var freeTextGadget = MungeUtil.MungeInstance("Inedo.BuildMaster.Extensibility.Gadgets.FreeTextGadget,BuildMaster.Web.WebApplication", new
+                var freeTextGadget = Util.Recipes.Munging.MungeInstance("Inedo.BuildMaster.Extensibility.Gadgets.FreeTextGadget,BuildMaster.Web.WebApplication", new
                 {
                     AllowHtml = true,
                     Text = dashboardText
@@ -335,7 +335,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
                 StoredProcs.Dashboards_CreateDashboard(this.ApplicationId, null, Domains.DashboardScopes.Build).ExecuteNonQuery();
                 int dashboardId = (int)StoredProcs.Dashboards_GetDashboard(this.ApplicationId, Domains.DashboardScopes.Build).ExecuteDataRow()[TableDefs.Dashboards.Dashboard_Id];
-                var freeTextGadget = MungeUtil.MungeInstance("Inedo.BuildMaster.Extensibility.Gadgets.FreeTextGadget,BuildMaster.Web.WebApplication", new
+                var freeTextGadget = Util.Recipes.Munging.MungeInstance("Inedo.BuildMaster.Extensibility.Gadgets.FreeTextGadget,BuildMaster.Web.WebApplication", new
                 {
                     AllowHtml = true,
                     Text = dashboardText
@@ -421,7 +421,10 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 Util.Reflection.GetCustomAttribute<ActionPropertiesAttribute>(action.GetType()).Name,
                 Domains.YN.Yes,
                 0,
-                "N"
+                "N",
+                null,
+                null,
+                null
             );
 
             proc.ExecuteNonQuery();

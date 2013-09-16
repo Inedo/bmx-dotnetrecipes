@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using ICSharpCode.SharpZipLib.Zip;
 using Inedo.BuildMaster.Extensibility.Providers;
 using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 using Inedo.BuildMaster.Files;
-using Inedo.Linq;
 
 namespace Inedo.BuildMasterExtensions.DotNetRecipes.Providers
 {
     [ProviderProperties(
         "Example",
         "Contains the source code for sample applications.")]
-    internal sealed class ExampleSourceControlProvider : SourceControlProviderBase, IVersioningProvider, IRevisionProvider
+    internal sealed class ExampleSourceControlProvider : SourceControlProviderBase, ILabelingProvider, IRevisionProvider
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ExampleSourceControlProvider"/> class.
@@ -77,10 +77,6 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes.Providers
                 return value.ToDirectoryEntryInfo("/");
             else
                 throw new FileNotFoundException();
-        }
-        public override DirectoryEntryInfo GetDirectoryEntryInfo(string sourcePath, bool recurse)
-        {
-            return this.GetDirectoryEntryInfo(sourcePath);
         }
         public override byte[] GetFileContents(string filePath)
         {

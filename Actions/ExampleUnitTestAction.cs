@@ -53,7 +53,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes.Actions
         {
             if (this.BitCheckerApplicationId != this.Context.ApplicationId)
             {
-                LogError("This action is for demonstration purposes and may only be used in the BitChecker example application. " +
+                this.LogError("This action is for demonstration purposes and may only be used in the BitChecker example application. " +
                          "To add unit testing to your deployment plan, add the unit test action for your project's unit test framework " +
                          "(ex. NUnit, JUnit, Gallio)");
                 return;

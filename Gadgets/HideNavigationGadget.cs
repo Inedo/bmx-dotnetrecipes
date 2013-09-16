@@ -1,4 +1,5 @@
-﻿using System.Web.UI;
+﻿using System.Linq;
+using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using Inedo.BuildMaster.Data;
 using Inedo.BuildMaster.Extensibility.Gadgets;
@@ -32,11 +33,11 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes.Gadgets
         /// </returns>
         public override Control CreateFullSizeGadgetControl(GadgetContext context)
         {
-            var build = StoredProcs.Builds_GetBuild(context.ApplicationId, "1.1", "1").ExecuteDataRow();
+            var hasBuild = StoredProcs.Builds_GetBuild(context.ApplicationId, "1.1", "1").Execute().Any();
 
             var ctlScript = new HtmlGenericControl("script")
             {
-                Visible = build == null,
+                Visible = !hasBuild,
                 InnerHtml = @"
 $(function(){ 
 $('.application-navigation-bar').hide(); 

@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Inedo.BuildMaster.Extensibility.Providers.Database;
 using Inedo.BuildMaster.Extensibility.Providers;
-using Inedo.BuildMaster.Data;
+using Inedo.BuildMaster.Extensibility.Providers.Database;
 
 namespace Inedo.BuildMasterExtensions.DotNetRecipes.Providers
 {
