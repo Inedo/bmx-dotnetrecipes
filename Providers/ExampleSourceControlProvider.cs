@@ -125,7 +125,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes.Providers
                 }
             }
         }
-        public byte[] GetCurrentRevision(string path)
+        public object GetCurrentRevision(string path)
         {
             return new byte[0];
         }
