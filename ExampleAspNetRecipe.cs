@@ -221,7 +221,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 // Build
                 planId = CreatePlan(deployableId, environmentId, "Build", Properties.Resources.BitChecker_Build);
                 AddAction(planId,
-                    (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.DotNet2.BuildNetAppAction,DotNet2",
+                    (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.WindowsSdk.MSBuild.BuildMSBuildProjectAction,WindowsSdk",
                     new
                     {
                         IsWebProject = true,
@@ -239,16 +239,15 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
                 // Deploy Web
                 planId = CreatePlan(deployableId, environmentId, "Deploy Web", Properties.Resources.BitChecker_DeployWeb);
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.Files.TransferFilesAction", new
+                AddTransferFilesAction(
+                    planId, 
+                    new
                     {
                         IncludeFileMasks = new[] { "*", "!web_appSettings.config" },
                         DeleteTarget = true,
                         SourceDirectory = string.Empty,
-                        SourceServerId = 1,
                         TargetDirectory = Path.Combine(this.DeploymentPath, environmentName),
-                        TargetServerId = 1
-                    }));
+                    });
                 AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Configuration.DeployConfigurationFileAction", new
                     {
@@ -413,7 +412,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
             var proc = StoredProcs.Plans_CreateOrUpdateAction(
                 planId,
                 null,
-                action is RemoteActionBase ? (int?)1 : null,
+                action is AgentBasedActionBase ? (int?)1 : null,
                 null,
                 action.ToString(),
                 Domains.YN.No,
@@ -423,6 +422,34 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 0,
                 "N",
                 null,
+                null,
+                null
+            );
+
+            proc.ExecuteNonQuery();
+
+            return proc.Action_Sequence.Value;
+        }
+        private static int AddTransferFilesAction(int planId, object properties)
+        {
+            var action = Util.Recipes.Munging.MungeCoreExAction(
+                "Inedo.BuildMaster.Extensibility.Actions.Files.TransferFilesAction", 
+                properties
+            );
+
+            var proc = StoredProcs.Plans_CreateOrUpdateAction(
+                planId,
+                null,
+                1,
+                null,
+                action.ToString(),
+                Domains.YN.No,
+                Util.Persistence.SerializeToPersistedObjectXml(action),
+                Util.Reflection.GetCustomAttribute<ActionPropertiesAttribute>(action.GetType()).Name,
+                Domains.YN.Yes,
+                0,
+                "N",
+                1,
                 null,
                 null
             );

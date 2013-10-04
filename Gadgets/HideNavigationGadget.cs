@@ -33,7 +33,13 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes.Gadgets
         /// </returns>
         public override Control CreateFullSizeGadgetControl(GadgetContext context)
         {
-            var hasBuild = StoredProcs.Builds_GetBuild(context.ApplicationId, "1.1", "1").Execute().Any();
+            bool hasBuild = false;
+            try
+            {
+                StoredProcs.Builds_GetBuild(context.ApplicationId, "1.1", "1").Execute().Any();
+                hasBuild = true;
+            }
+            catch { }
 
             var ctlScript = new HtmlGenericControl("script")
             {

@@ -1,8 +1,10 @@
 ﻿<script type="text/javascript">
-$(function(){
-	if ($.trim($('.main-content > h1').text()) == 'BitChecker 1.1 Build 1') {
-		$('.bitchecker-container').show().prependTo('.main-content');
-	} 
+    $(function () {
+
+        var breadcrumbHtml = $('.breadcrumb-container').html();
+        if (breadcrumbHtml.indexOf('Release 1.1') !== -1 && breadcrumbHtml.indexOf('Build 1') !== -1) {
+            $('.bitchecker-container').show().prependTo('.main-content');
+        }
 });
 </script>
 <style type="text/css">
@@ -13,7 +15,7 @@ $(function(){
 	.bitchecker-container h2 { margin-top: 20px; }
 </style>
 
-<div class="bitchecker-container">
+<div class="bitchecker-container white-box padded-box">
 	<h1>Congratulations!</h1>
 	<p>You've created your first build of BitChecker! This text only will be displayed on this first build, and you can 
 	<a href="#" onclick="$('.bitchecker-container').slideUp();return false;">hide it</a> if you'd like.</p>

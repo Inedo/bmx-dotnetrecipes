@@ -109,7 +109,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 // Build
                 planId = CreatePlan(deployableId, environmentId, "Build");
                 AddAction(planId,
-                    (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.DotNet2.BuildNetAppAction,DotNet2",
+                    (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.WindowsSdk.MSBuild.BuildMSBuildProjectAction,WindowsSdk",
                     new
                     {
                         OverriddenSourceDirectory = @"~\Source",
@@ -121,7 +121,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 if (UseClickOnce)
                 {
                     AddAction(planId,
-                        (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.DotNet2.ClickOnceAction,DotNet2",
+                        (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.WindowsSdk.DotNet.ClickOnceAction,WindowsSdk",
                         new
                         {
                             OverriddenSourceDirectory = @"~\BuildOutput",
@@ -141,16 +141,16 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
                 // Deploy
                 planId = CreatePlan(deployableId, environmentId, "Deploy");
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.Files.TransferFilesAction",new
+                AddTransferFilesAction(
+                    planId,
+                    new
                     {
                         IncludeFileMasks = new[] { "*" },
                         DeleteTarget = true,
                         SourceDirectory = @"~\BuildOutput",
-                        SourceServerId = 1,
                         TargetDirectory = Path.Combine(DeploymentPath, environmentName),
-                        TargetServerId = 1
-                    }));
+                    }
+                );
             }
 
             // Other Environments
@@ -214,6 +214,34 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     null,
                     null);
             proc.ExecuteNonQuery();
+            return proc.Action_Sequence.Value;
+        }
+        private static int AddTransferFilesAction(int planId, object properties)
+        {
+            var action = Util.Recipes.Munging.MungeCoreExAction(
+                "Inedo.BuildMaster.Extensibility.Actions.Files.TransferFilesAction",
+                properties
+            );
+
+            var proc = StoredProcs.Plans_CreateOrUpdateAction(
+                planId,
+                null,
+                1,
+                null,
+                action.ToString(),
+                Domains.YN.No,
+                Util.Persistence.SerializeToPersistedObjectXml(action),
+                Util.Reflection.GetCustomAttribute<ActionPropertiesAttribute>(action.GetType()).Name,
+                Domains.YN.Yes,
+                0,
+                "N",
+                1,
+                null,
+                null
+            );
+
+            proc.ExecuteNonQuery();
+
             return proc.Action_Sequence.Value;
         }
     }
