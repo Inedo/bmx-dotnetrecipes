@@ -68,7 +68,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                         null,
                         this.ApplicationId,
                         "Web",
-                        Domains.DeployableTypes.WebApplication);
+                        Domains.DeployableTypes.Other);
                 proc.ExecuteNonQuery();
                 deployableId = proc.Deployable_Id.Value;
 
@@ -77,7 +77,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                         null,
                         this.ApplicationId,
                         "Database",
-                        Domains.DeployableTypes.Database);
+                        Domains.DeployableTypes.Other);
                 proc.ExecuteNonQuery();
                 databaseDeployableId = proc.Deployable_Id.Value;
             }
@@ -96,7 +96,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
             // Create build in old release
 
-            StoredProcs.Builds_CreateBuild(this.ApplicationId, "1.0", "Y", "Y", DateTime.Now, null, null, null, null).Execute();
+            StoredProcs.Builds_CreateBuild(this.ApplicationId, "1.0", "Y", "Y", DateTime.UtcNow, null, null, null, null, null).Execute();
 
             // auto-promote build until old release is deployed
             for (int i = 0; i < workflowSteps.Rows.Count - 1; i++)
@@ -106,7 +106,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     "1.0",
                     "1",
                     null,
-                    DateTime.Now,
+                    DateTime.UtcNow,
                     "Y",
                     "N",
                     (int)workflowSteps.Rows[i][TableDefs.WorkflowSteps_Extended.Next_Environment_Id],

@@ -12,8 +12,8 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes.Actions
     /// </summary>
     [ActionProperties(
         "Execute Unit Tests",
-        "Runs unit tests on a project.",
-        "Testing")]
+        "Runs unit tests on a project.")]
+    [Tag("Testing")]
     [CustomEditor(typeof(ExampleUnitTestActionEditor))]
     internal sealed class ExampleUnitTestAction : UnitTestActionBase
     {

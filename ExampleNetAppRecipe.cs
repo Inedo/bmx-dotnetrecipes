@@ -58,7 +58,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                         null,
                         ApplicationId,
                         "App",
-                        Domains.DeployableTypes.WindowsClient);
+                        Domains.DeployableTypes.Other);
                 proc.ExecuteNonQuery();
                 deployableId = proc.Deployable_Id.Value;
             }
