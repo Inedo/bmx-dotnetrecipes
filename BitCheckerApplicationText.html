@@ -5,9 +5,9 @@
     .bitchecker-container .superEmphasizedText { font-size: 120%; color: #AA3915; font-weight: bold; }
     .bitchecker-container h2 { margin-top: 20px; margin-bottom:0px; }
 
-    .bitchecker-container .superBuildButton { width:450px; margin:20px auto; border-width: 2px; box-shadow: 3px 3px 5px #777; -moz-box-shadow: 3px 3px 5px #777; -webkit-box-shadow: 3px 3px 5px #777; font-size:32px;font-weight:bold; height:64px; }
-    .bitchecker-container .superBuildButton img {display:block;float:left;width:64px;height: 64px;}
+    .bitchecker-container .superBuildButton { width: 85%; margin:20px auto; border-width: 2px; box-shadow: 3px 3px 5px #777; -moz-box-shadow: 3px 3px 5px #777; -webkit-box-shadow: 3px 3px 5px #777; font-size:32px;font-weight:bold; height:64px; }
     .bitchecker-container .superBuildButton > div { margin-right:10px;text-align: center; line-height:64px }
+    .bitchecker-container .button-container { text-align: center; }
 </style>
 
 <div class="bitchecker-container-opener white-box padded-box">
@@ -18,10 +18,11 @@
 	<h1>Let's get started with BuildMaster!</h1>
 	<p>Don't worry. This is quite possibly the quickest product tour ever. In fact, if you want to stop reading and start exploring now, then just click that big <em>Create New Build</em> button below. We don't mind.</p>
 
-	<div class="button superBuildButton">
-		<img title="Create New Build" alt="Create New Build" src="/0x44/InedoLib/Inedo.Web.Controls.IconImage/ProcessImageRequest/InedoIcons/Virtuallnk/128x128/CD.png" />
-		<div>Create New Build &raquo;</div>
-	</div>
+    <div class="button-container">
+	    <div class="button superBuildButton">
+		    <div>Create New Build</div>
+	    </div>
+    </div>
 	<script type="text/javascript">$(function () { if(!window.a) $('.superBuildButton').click(function () { window.location = 'Builds/CreateNewBuild.aspx?autoCreate=y'; return false; }); window.a = true; });</script>
 
 	<h2>Applications and BuildMaster</h2>

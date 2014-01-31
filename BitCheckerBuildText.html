@@ -17,7 +17,7 @@
 
 <div class="bitchecker-container white-box padded-box">
 	<h1>Congratulations!</h1>
-	<p>You've created your first build of BitChecker! This text only will be displayed on this first build, and you can 
+	<p>You've created your first build of BitChecker! This text only will be displayed for Build #1 (regardless of what environment the build is in, so if you've promoted to Testing or Production already, you can ignore it), and you can 
 	<a href="#" onclick="$('.bitchecker-container').slideUp();return false;">hide it</a> if you'd like.</p>
 	<p>The execution probably happened pretty quickly, so here are a few highlights:</p>
 	<ul>
@@ -32,7 +32,9 @@
 
 	<h2>To Testing and Beyond</h2>
 	<p style="margin-top:0px">After a build is created and deployed to its first environment (in this case, Integration), there's still a ways to go before production. This is represented in BuildMaster through promotions. Take a look at the "Promotion Status" section below; it shows that this build starts in Integration and then goes to Testing before finally going to Production. </p>
-	<p>This is a Promotion Workflow, and can be customized in each application. You can also set-up approvals and other promotion requirements as "gateways" to ensure that process is followed between environments. None of these are set-up for this BitChecker sample, so you are free to hit the <strong>Promote to Testing</strong> button at any time. Go ahead - <span class="superEmphasizedText">give it a shot!</span></p>
+	<p>This is a Promotion Workflow, and can be customized in each application. You can also set-up approvals and other promotion requirements as "gateways" to ensure that process is followed between environments. As an example, you'll notice that there is an approval required before the build can be promoted to the Testing environment. If you are logged in as the Admin user, you can go ahead and click the <b>Approve to Testing</b> button.
+        Once you've done that, you are free to hit the <b>Promote to Testing</b> button at any time. Go ahead - give it a shot!
+	</p>
 
 	<h2>Next Steps</h2>
 	<p style="margin-top:0px">After promoting a build to Testing, you should take a look around at how BitChecker is configured. It should help familiarize you with some of the core modules and concepts in BuildMaster. We'd suggest starting with Deployment Plans.</p>
