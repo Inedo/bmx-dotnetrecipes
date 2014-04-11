@@ -506,20 +506,16 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
             );
 
             var proc = StoredProcs.Plans_CreateOrUpdateAction(
-                planId,
-                null,
-                1,
-                null,
-                action.ToString(),
-                Domains.YN.No,
-                Util.Persistence.SerializeToPersistedObjectXml(action),
-                Util.Reflection.GetCustomAttribute<ActionPropertiesAttribute>(action.GetType()).Name,
-                Domains.YN.Yes,
-                0,
-                "N",
-                1,
-                null,
-                null
+                Plan_Id: planId,
+                Server_Id: 1,
+                Action_Description: action.ToString(),
+                ResumeNextOnFailure_Indicator: Domains.YN.No,
+                Action_Configuration: Util.Persistence.SerializeToPersistedObjectXml(action),
+                ActionType_Name: Util.Reflection.GetCustomAttribute<ActionPropertiesAttribute>(action.GetType()).Name,
+                Active_Indicator: Domains.YN.Yes,
+                Retry_Count: 0,
+                LogFailureAsWarning_Indicator: Domains.YN.No,
+                Target_Server_Id: 1
             );
 
             proc.ExecuteNonQuery();
@@ -541,22 +537,14 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
         private int CreatePlan(int deployableId, int environmentId, string planName, string planDesc)
         {
-            var proc = StoredProcs
-                .Plans_CreatePlanActionGroup(
-                    null,
-                    null,
-                    null,
-                    deployableId,
-                    environmentId,
-                    this.ApplicationId,
-                    null,
-                    null,
-                    null,
-                    Domains.YN.Yes,
-                    planName,
-                    planDesc,
-                    null,
-                    null);
+            var proc = StoredProcs.Plans_CreatePlanActionGroup(
+                Deployable_Id: deployableId,
+                Environment_Id: environmentId,
+                Application_Id: this.ApplicationId,
+                Active_Indicator: Domains.YN.Yes,
+                ActionGroup_Name: planName,
+                ActionGroup_Description: planDesc
+            );
             proc.ExecuteNonQuery();
             return proc.ActionGroup_Id.Value;
         }
