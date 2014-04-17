@@ -156,7 +156,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     "Example",
                     "Sample database provider for use only with example applications.",
                     Util.Persistence.SerializeToPersistedObjectXml(new ExampleDatabaseProvider()),
-                    "Y");
+                    Domains.YN.Yes);
 
                 proc.ExecuteNonQuery();
                 databaseProviderId = (int)proc.Provider_Id;
@@ -177,14 +177,14 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.ApplyLabelAction", new
                     {
                         SourcePath = "/TRUNK/BitChecker/",
-                        UserDefinedLabel = "%RELNO%.%BLDNO%",
+                        UserDefinedLabel = "$ReleaseNumber.$BuildNumber",
                         ProviderId = this.ScmProviderId
                     }));
                 AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction", new
                     {
                         SourcePath = "/TRUNK/BitChecker/",
-                        UserDefinedLabel = "%RELNO%.%BLDNO%",
+                        UserDefinedLabel = "$ReleaseNumber.$BuildNumber",
                         ProviderId = this.ScmProviderId
                     }));
                 AddAction(planId,
@@ -193,7 +193,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     {
                         FileMasks = new[] { "*\\AssemblyInfo.cs" },
                         Recursive = true,
-                        Version = "%RELNO%.%BLDNO%"
+                        Version = "$ReleaseNumber.$BuildNumber"
                     }));
 
                 // Compare Source
@@ -202,7 +202,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction", new
                     {
                         SourcePath = "/TRUNK/BitChecker/",
-                        UserDefinedLabel = "%PREVRELNO%.%PREVBLDNO%",
+                        UserDefinedLabel = "$ReleaseNumber.$BuildNumber",
                         ProviderId = this.ScmProviderId,
                         OverriddenTargetDirectory = "PrevSrc"
                     }));
@@ -210,7 +210,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction", new
                     {
                         SourcePath = "/TRUNK/BitChecker/",
-                        UserDefinedLabel = "%RELNO%.%BLDNO%",
+                        UserDefinedLabel = "$ReleaseNumber.$BuildNumber",
                         ProviderId = this.ScmProviderId,
                         OverriddenTargetDirectory = "CurrentSrc"
                     }));
@@ -220,7 +220,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                         IncludeUnchanged = false,
                         Path1 = "PrevSrc",
                         Path2 = "CurrentSrc",
-                        OutputName = "Changes Between %PREVRELNO%.%PREVBLDNO% and %RELNO%.%BLDNO%"
+                        OutputName = "Changes between $PreviousReleaseNumber.$PreviousBuildNumber and $ReleaseNumber.$BuildNumber"
                     }));
 
                 // Build
@@ -357,10 +357,10 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 admin.User_Name,
                 "Approved by Admin",
                 "U",
-                "N",
+                Domains.YN.No,
                 null,
                 "A",
-                "N").Execute();
+                Domains.YN.No).Execute();
         }
 
         public void CreateDashboards()
