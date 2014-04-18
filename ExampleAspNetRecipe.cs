@@ -255,7 +255,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Configuration.DeployConfigurationFileAction", new
                     {
-                        ConfigurationFileId = configurationFileId,
+                        ConfigurationFileName = "web_appsettings.config",
                         InstanceName = environmentName,
                         OverriddenSourceDirectory = Path.Combine(this.DeploymentPath, environmentName)
                     }));
