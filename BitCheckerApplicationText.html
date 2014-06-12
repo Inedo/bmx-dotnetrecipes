@@ -23,7 +23,18 @@
 		    <div>Create New Build</div>
 	    </div>
     </div>
-	<script type="text/javascript">$(function () { if(!window.a) $('.superBuildButton').click(function () { window.location = 'Builds/CreateNewBuild.aspx?autoCreate=y'; return false; }); window.a = true; });</script>
+	<script type="text/javascript">
+	    $(function () {
+	        if (!window.a) {
+	            $('.superBuildButton').click(function () {
+	                window.location = '__CREATE_BUILD_URL__';
+	                return false;
+	            });
+	        }
+
+	        window.a = true;
+	    });
+	</script>
 
 	<h2>Applications and BuildMaster</h2>
 	<p>Projects in BuildMaster are organized as <em>applications</em>, and each application has its own releases, builds, deployment plans, configuration files, dependencies, database changes, etc. You can of course share some things between applications, but we'll look at that later.</p>
@@ -39,32 +50,4 @@
 	<p>The configuration file we've set-up for BitChecker illustrates how you'd manage the different instances for the different environments. As for the database changes themselves, those are also represented in this example.</p>
 
 	<p>All that said, it's high time we create a build. Just click that big <em>Create New Build</em> button above and watch the magic happen.
-
-<!--
-	<hr />	
-	<h2>Build and Deployment Strategy</h2>
-	<p>Most applications will follow a similar build and deploy strategy that BitChecker does. After creating a first build, you can explore how we've set this up by going to Deployment Plans.</p>
-	<ol>
-		<li>Label or Tag Files in Source Control</li>
-		<li>Get Files from Label</li>
-		<li>Compile Source Code</li>
-		<li>Run Unit Tests and perform other code analysis</li>
-		<li>Create Artifact</li>
-		<li>Stop Website</li>
-		<li>Deploy Artifact</li>
-		<li>Deploy Configuration File</li>
-		<li>Deploy Database Changes</li>
-		<li>Start Website</li>
-	</ol>
-	
-	<p>All of these steps only occur in the first environment. Later environments (such as Test, Staging, QA, etc) generally do the following.</p>
-	<ol>
-		<li>Stop Website</li>
-		<li>Deploy Artifact</li>
-		<li>Deploy Configuration File</li>
-		<li>Deploy Database Changes</li>
-		<li>Start Website</li>
-	</ol>
-	<div style="clear: right;"></div>
--->
 </div>

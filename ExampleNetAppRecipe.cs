@@ -82,7 +82,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 string environmentName = StoredProcs.Environments_GetEnvironment(environmentId).ExecuteDataRow()[TableDefs.Environments.Environment_Name].ToString();
 
                 // Source
-                planId = CreatePlan(deployableId, environmentId, "Source");
+                planId = CreatePlan(environmentId, "Source");
                 AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLatestAction", new
                     {
@@ -107,7 +107,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     }));
 
                 // Build
-                planId = CreatePlan(deployableId, environmentId, "Build");
+                planId = CreatePlan(environmentId, "Build");
                 AddAction(planId,
                     (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.WindowsSdk.MSBuild.BuildMSBuildProjectAction,WindowsSdk",
                     new
@@ -140,7 +140,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     }));
 
                 // Deploy
-                planId = CreatePlan(deployableId, environmentId, "Deploy");
+                planId = CreatePlan(environmentId, "Deploy");
                 AddTransferFilesAction(
                     planId,
                     new
@@ -160,7 +160,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 string environmentName = StoredProcs.Environments_GetEnvironment(environmentId).ExecuteDataRow()[TableDefs.Environments.Environment_Name].ToString();
 
                 // Deploy
-                planId = CreatePlan(deployableId, environmentId, "Deploy");
+                planId = CreatePlan(environmentId, "Deploy");
                 AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Artifacts.DeployArtifactAction",new
                     {
@@ -175,12 +175,12 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
             return new ExampleSourceControlProvider();
         }
 
-        private int CreatePlan(int deployableId, int environmentId, string planName)
+        private int CreatePlan(int environmentId, string planName)
         {
-            var proc = StoredProcs.Plans_CreatePlanActionGroup(
-                Deployable_Id: deployableId,
+            var proc = StoredProcs.Plans_CreateDeploymentPlanActionGroup(
                 Environment_Id: environmentId,
                 Application_Id: this.ApplicationId,
+                Deployable_Name: "App",
                 Active_Indicator: Domains.YN.Yes,
                 ActionGroup_Name: planName
             );
@@ -189,13 +189,17 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
         }
         private int AddAction(int planId, ActionBase action)
         {
+            var desc = action.GetActionDescription();
+            var shortDesc = desc.ShortDescription != null ? desc.ShortDescription.ToString() : null;
+            var longDesc = desc.LongDescription != null ? desc.LongDescription.ToString() : null;
+
             var proc = StoredProcs.Plans_CreateOrUpdateAction(
-                Plan_Id: planId,
+                ActionGroup_Id: planId,
                 Server_Id: action is RemoteActionBase ? (int?)1 : null,
-                Action_Description: action.ToString(),
+                Short_Description: shortDesc,
                 ResumeNextOnFailure_Indicator: Domains.YN.No,
                 Action_Configuration: Util.Persistence.SerializeToPersistedObjectXml(action),
-                ActionType_Name: Util.Reflection.GetCustomAttribute<ActionPropertiesAttribute>(action.GetType()).Name,
+                Long_Description: longDesc,
                 Active_Indicator: Domains.YN.Yes,
                 Retry_Count: 0,
                 LogFailureAsWarning_Indicator: Domains.YN.No
@@ -210,13 +214,17 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 properties
             );
 
+            var desc = action.GetActionDescription();
+            var shortDesc = desc.ShortDescription != null ? desc.ShortDescription.ToString() : null;
+            var longDesc = desc.LongDescription != null ? desc.LongDescription.ToString() : null;
+
             var proc = StoredProcs.Plans_CreateOrUpdateAction(
-                Plan_Id: planId,
+                ActionGroup_Id: planId,
                 Server_Id: 1,
-                Action_Description: action.ToString(),
+                Short_Description: shortDesc,
+                Long_Description: longDesc,
                 ResumeNextOnFailure_Indicator: Domains.YN.No,
                 Action_Configuration: Util.Persistence.SerializeToPersistedObjectXml(action),
-                ActionType_Name: Util.Reflection.GetCustomAttribute<ActionPropertiesAttribute>(action.GetType()).Name,
                 Active_Indicator: Domains.YN.Yes,
                 Retry_Count: 0,
                 LogFailureAsWarning_Indicator: Domains.YN.No,

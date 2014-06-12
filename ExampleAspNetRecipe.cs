@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Text;
+using System.Web;
 using System.Xml;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Data;
@@ -16,6 +18,7 @@ using Inedo.BuildMaster.Web;
 using Inedo.BuildMasterExtensions.DotNetRecipes.Actions;
 using Inedo.BuildMasterExtensions.DotNetRecipes.Gadgets;
 using Inedo.BuildMasterExtensions.DotNetRecipes.Providers;
+using Inedo.Web.Handlers;
 
 namespace Inedo.BuildMasterExtensions.DotNetRecipes
 {
@@ -172,7 +175,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 string environmentName = StoredProcs.Environments_GetEnvironment(environmentId).ExecuteDataRow()[TableDefs.Environments.Environment_Name].ToString();
 
                 // Source
-                planId = CreatePlan(deployableId, environmentId, "Source", Properties.Resources.BitChecker_GetSource);
+                planId = CreatePlan("Web", environmentId, "Source", Properties.Resources.BitChecker_GetSource);
                 AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.ApplyLabelAction", new
                     {
@@ -197,7 +200,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     }));
 
                 // Compare Source
-                planId = CreatePlan(deployableId, environmentId, "Compare Source", Properties.Resources.BitChecker_CompareSource);
+                planId = CreatePlan("Web", environmentId, "Compare Source", Properties.Resources.BitChecker_CompareSource);
                 AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction", new
                     {
@@ -224,7 +227,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     }));
 
                 // Build
-                planId = CreatePlan(deployableId, environmentId, "Build", Properties.Resources.BitChecker_Build);
+                planId = CreatePlan("Web", environmentId, "Build", Properties.Resources.BitChecker_Build);
                 AddAction(planId,
                     (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.WindowsSdk.MSBuild.BuildMSBuildProjectAction,WindowsSdk",
                     new
@@ -239,11 +242,11 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                         ArtifactName = "Web"
                     }));
 
-                planId = CreatePlan(deployableId, environmentId, "Unit Tests", Properties.Resources.BitChecker_UnitTests);
+                planId = CreatePlan("Web", environmentId, "Unit Tests", Properties.Resources.BitChecker_UnitTests);
                 AddAction(planId, new ExampleUnitTestAction { BitCheckerApplicationId = this.ApplicationId });
 
                 // Deploy Web
-                planId = CreatePlan(deployableId, environmentId, "Deploy Web", Properties.Resources.BitChecker_DeployWeb);
+                planId = CreatePlan("Web", environmentId, "Deploy Web", Properties.Resources.BitChecker_DeployWeb);
 
                 AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Artifacts.DeployArtifactAction", new
@@ -261,7 +264,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     }));
 
                 // Deploy Database
-                planId = CreatePlan(databaseDeployableId, environmentId, "Deploy Database", Properties.Resources.BitChecker_DeployDatabase);
+                planId = CreatePlan("Database", environmentId, "Deploy Database", Properties.Resources.BitChecker_DeployDatabase);
                 AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Database.ExecuteDatabaseChangeScriptsAction", new
                     {
@@ -269,7 +272,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     }));
 
                 // Say Hello to Inedo
-                planId = CreatePlan(deployableId, environmentId, "Say Hello to Inedo", Properties.Resources.BitChecker_SayHello);
+                planId = CreatePlan("Web", environmentId, "Say Hello to Inedo", Properties.Resources.BitChecker_SayHello);
 
                 var scriptType = (IScriptMetadataReader)Activator.CreateInstance(Type.GetType("Inedo.BuildMasterExtensions.Windows.Scripting.PowerShell.PowerShellScriptType,Windows"));
                 var metadata = scriptType.GetScriptMetadata(new StreamReader(new MemoryStream(Properties.Resources.BitChecker_SayHelloScript)));
@@ -314,7 +317,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 string environmentName = StoredProcs.Environments_GetEnvironment(environmentId).ExecuteDataRow()[TableDefs.Environments.Environment_Name].ToString();
 
                 // Deploy Web
-                planId = CreatePlan(deployableId, environmentId, "Deploy Web", Properties.Resources.BitChecker_DeployWeb);
+                planId = CreatePlan("Web", environmentId, "Deploy Web", Properties.Resources.BitChecker_DeployWeb);
                 AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Artifacts.DeployArtifactAction", new
                     {
@@ -330,7 +333,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     }));
 
                 // Deploy Database
-                planId = CreatePlan(databaseDeployableId, environmentId, "Deploy Database", Properties.Resources.BitChecker_DeployDatabase);
+                planId = CreatePlan("Database", environmentId, "Deploy Database", Properties.Resources.BitChecker_DeployDatabase);
                 AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
                     "Inedo.BuildMaster.Extensibility.Actions.Database.ExecuteDatabaseChangeScriptsAction", new
                     {
@@ -373,7 +376,9 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 using (var stream = typeof(ExampleAspNetRecipe).Assembly.GetManifestResourceStream("Inedo.BuildMasterExtensions.DotNetRecipes.BitCheckerApplicationText.html"))
                 using (var reader = new StreamReader(stream))
                 {
-                    dashboardText = reader.ReadToEnd();
+                    dashboardText = reader
+                        .ReadToEnd()
+                        .Replace("__CREATE_BUILD_URL__", HttpUtility.JavaScriptStringEncode(DynamicHttpHandling.GetProcessRequestDelegateUrl(CreateBuild)));
                 }
 
                 int dashboardId = (int)StoredProcs.Dashboards_GetDashboard(this.ApplicationId, Domains.DashboardScopes.Application).ExecuteDataRow()[TableDefs.Dashboards.Dashboard_Id];
@@ -505,13 +510,17 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 properties
             );
 
+            var desc = action.GetActionDescription();
+            var shortDesc = desc.ShortDescription != null ? desc.ShortDescription.ToString() : null;
+            var longDesc = desc.LongDescription != null ? desc.LongDescription.ToString() : null;
+
             var proc = StoredProcs.Plans_CreateOrUpdateAction(
-                Plan_Id: planId,
+                ActionGroup_Id: planId,
                 Server_Id: 1,
-                Action_Description: action.ToString(),
+                Short_Description: shortDesc,
+                Long_Description: longDesc,
                 ResumeNextOnFailure_Indicator: Domains.YN.No,
                 Action_Configuration: Util.Persistence.SerializeToPersistedObjectXml(action),
-                ActionType_Name: Util.Reflection.GetCustomAttribute<ActionPropertiesAttribute>(action.GetType()).Name,
                 Active_Indicator: Domains.YN.Yes,
                 Retry_Count: 0,
                 LogFailureAsWarning_Indicator: Domains.YN.No,
@@ -535,12 +544,42 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
             ).ExecuteNonQuery();
         }
 
-        private int CreatePlan(int deployableId, int environmentId, string planName, string planDesc)
+        private static void CreateBuild(HttpContext context)
         {
-            var proc = StoredProcs.Plans_CreatePlanActionGroup(
-                Deployable_Id: deployableId,
+            int applicationId = int.Parse(context.Request.QueryString["applicationId"]);
+
+            var webUserContextType = Type.GetType("Inedo.BuildMaster.Web.Security.WebUserContext,BuildMaster", true);
+            var canPerformTask = webUserContextType.GetMethod("CanPerformTask");
+            if (!(bool)canPerformTask.Invoke(null, new object[] { 6 /*Builds_CreateBuild*/, null, applicationId, null, null }))
+                throw new SecurityException();
+
+            StoredProcs.Builds_CreateBuild(
+                Application_Id: applicationId,
+                Release_Number: null,
+                PromoteBuild_Indicator: Domains.YN.Yes,
+                StartExecution_Indicator: Domains.YN.Yes,
+                ExecutionStart_Date: null,
+                Requested_Build_Number: null,
+                BuildVariables_Xml: null,
+                PromotionVariables_Xml: null,
+                ExecutionVariables_Xml: null,
+                Build_Number: null
+            ).Execute();
+
+            context.Response.Redirect(
+                string.Format(
+                    "/applications/{0}/executions/execution-in-progress",
+                    applicationId
+                )
+            );
+        }
+
+        private int CreatePlan(string deployableName, int environmentId, string planName, string planDesc)
+        {
+            var proc = StoredProcs.Plans_CreateDeploymentPlanActionGroup(
                 Environment_Id: environmentId,
                 Application_Id: this.ApplicationId,
+                Deployable_Name: deployableName,
                 Active_Indicator: Domains.YN.Yes,
                 ActionGroup_Name: planName,
                 ActionGroup_Description: planDesc
