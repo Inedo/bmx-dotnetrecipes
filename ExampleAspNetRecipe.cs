@@ -88,36 +88,39 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 databaseDeployableId = proc.Deployable_Id.Value;
             }
 
+            StoredProcs.Variables_CreateOrUpdateVariableDefinition("PreviousReleaseNumber", null, null, null, this.ApplicationId, null, null, null, null, "1.0", Domains.YN.No).Execute();
+            StoredProcs.Variables_CreateOrUpdateVariableDefinition("PreviousBuildNumber", null, null, null, this.ApplicationId, null, null, null, null, "1.0", Domains.YN.No).Execute();
+
             // Create Previous Release
-            StoredProcs.Releases_CreateOrUpdateRelease(
-                this.ApplicationId,
-                "1.0",
-                this.WorkflowId,
-                null,
-                null,
-                null,
-                "<ReleaseDeployables><ReleaseDeployable Deployable_Id=\"" + deployableId.ToString() + "\" InclusionType_Code=\"I\" />" +
-                "<ReleaseDeployable Deployable_Id=\"" + databaseDeployableId.ToString() + "\" InclusionType_Code=\"I\" /></ReleaseDeployables>")
-                .ExecuteNonQuery();
+            //StoredProcs.Releases_CreateOrUpdateRelease(
+            //    this.ApplicationId,
+            //    "1.0",
+            //    this.WorkflowId,
+            //    null,
+            //    null,
+            //    null,
+            //    "<ReleaseDeployables><ReleaseDeployable Deployable_Id=\"" + deployableId.ToString() + "\" InclusionType_Code=\"I\" />" +
+            //    "<ReleaseDeployable Deployable_Id=\"" + databaseDeployableId.ToString() + "\" InclusionType_Code=\"I\" /></ReleaseDeployables>")
+            //    .ExecuteNonQuery();
 
-            // Create build in old release
+            //// Create build in old release
 
-            StoredProcs.Builds_CreateBuild(this.ApplicationId, "1.0", "Y", "Y", DateTime.UtcNow, null, null, null, null, null).Execute();
+            //StoredProcs.Builds_CreateBuild(this.ApplicationId, "1.0", "Y", "Y", DateTime.UtcNow, null, null, null, null, null).Execute();
 
-            // auto-promote build until old release is deployed
-            for (int i = 0; i < workflowSteps.Rows.Count - 1; i++)
-            {
-                StoredProcs.Builds_PromoteBuild(
-                    this.ApplicationId,
-                    "1.0",
-                    "1",
-                    null,
-                    DateTime.UtcNow,
-                    "Y",
-                    "N",
-                    (int)workflowSteps.Rows[i][TableDefs.WorkflowSteps_Extended.Next_Environment_Id],
-                    null, null).ExecuteNonQuery();
-            }
+            //// auto-promote build until old release is deployed
+            //for (int i = 0; i < workflowSteps.Rows.Count - 1; i++)
+            //{
+            //    StoredProcs.Builds_PromoteBuild(
+            //        this.ApplicationId,
+            //        "1.0",
+            //        "1",
+            //        null,
+            //        DateTime.UtcNow,
+            //        "Y",
+            //        "N",
+            //        (int)workflowSteps.Rows[i][TableDefs.WorkflowSteps_Extended.Next_Environment_Id],
+            //        null, null).ExecuteNonQuery();
+            //}
 
             // Create Release
             string releaseNumber = "1.1";
