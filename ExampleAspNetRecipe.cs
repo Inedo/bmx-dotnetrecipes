@@ -89,7 +89,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
             }
 
             StoredProcs.Variables_CreateOrUpdateVariableDefinition("PreviousReleaseNumber", null, null, null, this.ApplicationId, null, null, null, null, "1.0", Domains.YN.No).Execute();
-            StoredProcs.Variables_CreateOrUpdateVariableDefinition("PreviousBuildNumber", null, null, null, this.ApplicationId, null, null, null, null, "1.0", Domains.YN.No).Execute();
+            StoredProcs.Variables_CreateOrUpdateVariableDefinition("PreviousBuildNumber", null, null, null, this.ApplicationId, null, null, null, null, "1", Domains.YN.No).Execute();
 
             // Create Release
             string releaseNumber = "1.1";
