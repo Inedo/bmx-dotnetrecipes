@@ -177,7 +177,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction", new
                     {
                         SourcePath = "/TRUNK/BitChecker/",
-                        UserDefinedLabel = "$ReleaseNumber.$BuildNumber",
+                        UserDefinedLabel = "$PreviousReleaseNumber.$PreviousBuildNumber",
                         ProviderId = this.ScmProviderId,
                         OverriddenTargetDirectory = "PrevSrc"
                     }));
