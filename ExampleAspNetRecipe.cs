@@ -381,7 +381,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 {
                     dashboardText = reader
                         .ReadToEnd()
-                        .Replace("__CREATE_BUILD_URL__", HttpUtility.JavaScriptStringEncode(DynamicHttpHandling.GetProcessRequestDelegateUrl(CreateBuild)));
+                        .Replace("__CREATE_BUILD_URL__", HttpUtility.JavaScriptStringEncode(DynamicHttpHandling.GetProcessRequestDelegateUrl(CreateBuild) + "?applicationId=" + this.ApplicationId));
                 }
 
                 int dashboardId = (int)StoredProcs.Dashboards_GetDashboard(this.ApplicationId, Domains.DashboardScopes.Application).ExecuteDataRow()[TableDefs.Dashboards.Dashboard_Id];
