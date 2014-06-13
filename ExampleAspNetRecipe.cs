@@ -91,37 +91,6 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
             StoredProcs.Variables_CreateOrUpdateVariableDefinition("PreviousReleaseNumber", null, null, null, this.ApplicationId, null, null, null, null, "1.0", Domains.YN.No).Execute();
             StoredProcs.Variables_CreateOrUpdateVariableDefinition("PreviousBuildNumber", null, null, null, this.ApplicationId, null, null, null, null, "1.0", Domains.YN.No).Execute();
 
-            // Create Previous Release
-            //StoredProcs.Releases_CreateOrUpdateRelease(
-            //    this.ApplicationId,
-            //    "1.0",
-            //    this.WorkflowId,
-            //    null,
-            //    null,
-            //    null,
-            //    "<ReleaseDeployables><ReleaseDeployable Deployable_Id=\"" + deployableId.ToString() + "\" InclusionType_Code=\"I\" />" +
-            //    "<ReleaseDeployable Deployable_Id=\"" + databaseDeployableId.ToString() + "\" InclusionType_Code=\"I\" /></ReleaseDeployables>")
-            //    .ExecuteNonQuery();
-
-            //// Create build in old release
-
-            //StoredProcs.Builds_CreateBuild(this.ApplicationId, "1.0", "Y", "Y", DateTime.UtcNow, null, null, null, null, null).Execute();
-
-            //// auto-promote build until old release is deployed
-            //for (int i = 0; i < workflowSteps.Rows.Count - 1; i++)
-            //{
-            //    StoredProcs.Builds_PromoteBuild(
-            //        this.ApplicationId,
-            //        "1.0",
-            //        "1",
-            //        null,
-            //        DateTime.UtcNow,
-            //        "Y",
-            //        "N",
-            //        (int)workflowSteps.Rows[i][TableDefs.WorkflowSteps_Extended.Next_Environment_Id],
-            //        null, null).ExecuteNonQuery();
-            //}
-
             // Create Release
             string releaseNumber = "1.1";
             StoredProcs.Releases_CreateOrUpdateRelease(
@@ -556,9 +525,11 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
             if (!(bool)canPerformTask.Invoke(null, new object[] { 6 /*Builds_CreateBuild*/, null, applicationId, null, null }))
                 throw new SecurityException();
 
-            StoredProcs.Builds_CreateBuild(
+            var release = StoredProcs.Releases_GetReleases(applicationId, Domains.ReleaseStatus.Active, 1).Execute().First();
+
+            var buildNumber = StoredProcs.Builds_CreateBuild(
                 Application_Id: applicationId,
-                Release_Number: null,
+                Release_Number: release.Release_Number,
                 PromoteBuild_Indicator: Domains.YN.Yes,
                 StartExecution_Indicator: Domains.YN.Yes,
                 ExecutionStart_Date: null,
@@ -571,8 +542,10 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
             context.Response.Redirect(
                 string.Format(
-                    "/applications/{0}/executions/execution-in-progress",
-                    applicationId
+                    "/applications/{0}/executions/execution-in-progress?releaseNumber={1}&buildNumber={2}",
+                    applicationId,
+                    Uri.EscapeDataString(release.Release_Number),
+                    Uri.EscapeDataString(buildNumber)
                 )
             );
         }
