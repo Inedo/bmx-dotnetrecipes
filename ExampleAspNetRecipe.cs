@@ -521,7 +521,9 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
             int applicationId = int.Parse(context.Request.QueryString["applicationId"]);
 
             var webUserContextType = Type.GetType("Inedo.BuildMaster.Web.Security.WebUserContext,BuildMaster", true);
-            var canPerformTask = webUserContextType.GetMethod("CanPerformTask");
+            var canPerformTask = webUserContextType
+                .GetMethods()
+                .First(m => m.Name == "CanPerformTask" && m.GetParameters().Length == 5);
             if (!(bool)canPerformTask.Invoke(null, new object[] { 6 /*Builds_CreateBuild*/, null, applicationId, null, null }))
                 throw new SecurityException();
 
