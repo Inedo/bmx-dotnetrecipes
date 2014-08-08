@@ -9,13 +9,12 @@ using System.Web;
 using System.Xml;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Data;
-using Inedo.BuildMaster.Extensibility.Actions;
 using Inedo.BuildMaster.Extensibility.Gadgets;
 using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 using Inedo.BuildMaster.Extensibility.Recipes;
 using Inedo.BuildMaster.Extensibility.Scripting;
 using Inedo.BuildMaster.Web;
-using Inedo.BuildMasterExtensions.DotNetRecipes.Actions;
+using Inedo.BuildMaster.Web.Security;
 using Inedo.BuildMasterExtensions.DotNetRecipes.Gadgets;
 using Inedo.BuildMasterExtensions.DotNetRecipes.Providers;
 using Inedo.Web.Handlers;
@@ -27,16 +26,9 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
         "Creates a new application that pulls code from a sample repository, compiles the project, and then publishes the files to local directories.",
         RecipeScopes.Example)]
     [CustomEditor(typeof(ExampleAspNetRecipeEditor))]
-    [WorkflowCreatingRequirements(MinimumEnvironmentCount = 2)]
+    [WorkflowCreatingRequirements(MinimumEnvironmentCount = 1)]
     public sealed class ExampleAspNetRecipe : RecipeBase, IApplicationCreatingRecipe, IWorkflowCreatingRecipe, IScmCreatingRecipe, IDashboardCreatingRecipe
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ExampleAspNetRecipe"/> class.
-        /// </summary>
-        public ExampleAspNetRecipe()
-        {
-        }
-
         public string DeploymentPath { get; set; }
         public string ApplicationName { get; set; }
         public string ApplicationGroup { get; set; }
@@ -49,23 +41,20 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
             get { return "Example"; }
             set { throw new NotSupportedException(); }
         }
+        public int ScmProviderId { get; set; }
+        public string ScmPath { get; set; }
+
         public SourceControlProviderBase InstantiateSourceControlProvider()
         {
             return new ExampleSourceControlProvider();
         }
-        public int ScmProviderId { get; set; }
-        public string ScmPath { get; set; }
-
         public override void Execute()
         {
-            // By this point, an app + workflow + Inedo Scm will exist
-
             var workflowSteps = StoredProcs
                 .Workflows_GetWorkflow(this.WorkflowId)
                 .ExecuteDataSet(TableNames.Workflows_Extended, TableNames.WorkflowSteps_Extended)
                 .Tables[TableNames.WorkflowSteps_Extended];
 
-            // Create Deployables
             int deployableId;
             int databaseDeployableId;
             {
@@ -91,7 +80,6 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
             StoredProcs.Variables_CreateOrUpdateVariableDefinition("PreviousReleaseNumber", null, null, null, this.ApplicationId, null, null, null, null, "1.0", Domains.YN.No).Execute();
             StoredProcs.Variables_CreateOrUpdateVariableDefinition("PreviousBuildNumber", null, null, null, this.ApplicationId, null, null, null, null, "1", Domains.YN.No).Execute();
 
-            // Create Release
             string releaseNumber = "1.1";
             StoredProcs.Releases_CreateOrUpdateRelease(
                 this.ApplicationId,
@@ -104,7 +92,6 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 "<ReleaseDeployable Deployable_Id=\"" + databaseDeployableId.ToString() + "\" InclusionType_Code=\"I\" /></ReleaseDeployables>")
                 .ExecuteNonQuery();
 
-            // Create Config File
             int configurationFileId;
             {
                 var proc = StoredProcs.ConfigurationFiles_CreateConfigurationFile(null, deployableId, "web_appsettings.config");
@@ -121,7 +108,6 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 );
             }
 
-            // Create Database Provider
             int databaseProviderId;
             {
                 var proc = StoredProcs.Providers_CreateOrUpdateProvider(
@@ -137,183 +123,90 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 databaseProviderId = (int)proc.Provider_Id;
             }
 
-            // Create approval 
-            CreateApproval();
+            this.CreateApproval();
 
-            int planId;
-            // First Environment
-            {
-                int environmentId = this.WorkflowSteps[0];
-                string environmentName = StoredProcs.Environments_GetEnvironment(environmentId).ExecuteDataRow()[TableDefs.Environments.Environment_Name].ToString();
+            CreateScript();
 
-                // Source
-                planId = CreatePlan("Web", environmentId, "Source", Properties.Resources.BitChecker_GetSource);
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.SourceControl.ApplyLabelAction", new
-                    {
-                        SourcePath = "/TRUNK/BitChecker/",
-                        UserDefinedLabel = "$ReleaseNumber.$BuildNumber",
-                        ProviderId = this.ScmProviderId
-                    }));
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction", new
-                    {
-                        SourcePath = "/TRUNK/BitChecker/",
-                        UserDefinedLabel = "$ReleaseNumber.$BuildNumber",
-                        ProviderId = this.ScmProviderId
-                    }));
-                AddAction(planId,
-                    (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.WindowsSdk.DotNet.WriteAssemblyInfoVersionsAction,WindowsSdk",
-                    new
-                    {
-                        FileMasks = new[] { "*\\AssemblyInfo.cs" },
-                        Recursive = true,
-                        Version = "$ReleaseNumber.$BuildNumber"
-                    }));
-
-                // Compare Source
-                planId = CreatePlan("Web", environmentId, "Compare Source", Properties.Resources.BitChecker_CompareSource);
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction", new
-                    {
-                        SourcePath = "/TRUNK/BitChecker/",
-                        UserDefinedLabel = "$PreviousReleaseNumber.$PreviousBuildNumber",
-                        ProviderId = this.ScmProviderId,
-                        OverriddenTargetDirectory = "PrevSrc"
-                    }));
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction", new
-                    {
-                        SourcePath = "/TRUNK/BitChecker/",
-                        UserDefinedLabel = "$ReleaseNumber.$BuildNumber",
-                        ProviderId = this.ScmProviderId,
-                        OverriddenTargetDirectory = "CurrentSrc"
-                    }));
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.Reporting.CompareDirectoriesReportingAction", new
-                    {
-                        IncludeUnchanged = false,
-                        Path1 = "PrevSrc",
-                        Path2 = "CurrentSrc",
-                        OutputName = "Changes between $PreviousReleaseNumber.$PreviousBuildNumber and $ReleaseNumber.$BuildNumber"
-                    }));
-
-                // Build
-                planId = CreatePlan("Web", environmentId, "Build", Properties.Resources.BitChecker_Build);
-                AddAction(planId,
-                    (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.WindowsSdk.MSBuild.BuildMSBuildProjectAction,WindowsSdk",
-                    new
-                    {
-                        IsWebProject = true,
-                        ProjectBuildConfiguration = "Debug",
-                        ProjectPath = "BitChecker.csproj"
-                    }));
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.Artifacts.CreateArtifactAction", new
-                    {
-                        ArtifactName = "Web"
-                    }));
-
-                planId = CreatePlan("Web", environmentId, "Unit Tests", Properties.Resources.BitChecker_UnitTests);
-                AddAction(planId, new ExampleUnitTestAction { BitCheckerApplicationId = this.ApplicationId });
-
-                // Deploy Web
-                planId = CreatePlan("Web", environmentId, "Deploy Web", Properties.Resources.BitChecker_DeployWeb);
-
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.Artifacts.DeployArtifactAction", new
-                    {
-                        ArtifactName = "Web",
-                        OverriddenTargetDirectory = Path.Combine(this.DeploymentPath, environmentName)
-                    }));
-
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.Configuration.DeployConfigurationFileAction", new
-                    {
-                        ConfigurationFileName = "web_appsettings.config",
-                        InstanceName = environmentName,
-                        OverriddenSourceDirectory = Path.Combine(this.DeploymentPath, environmentName)
-                    }));
-
-                // Deploy Database
-                planId = CreatePlan("Database", environmentId, "Deploy Database", Properties.Resources.BitChecker_DeployDatabase);
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.Database.ExecuteDatabaseChangeScriptsAction", new
-                    {
-                        ProviderId = databaseProviderId
-                    }));
-
-                // Say Hello to Inedo
-                planId = CreatePlan("Web", environmentId, "Say Hello to Inedo", Properties.Resources.BitChecker_SayHello);
-
-                var scriptType = (IScriptMetadataReader)Activator.CreateInstance(Type.GetType("Inedo.BuildMasterExtensions.Windows.Scripting.PowerShell.PowerShellScriptType,Windows"));
-                var metadata = scriptType.GetScriptMetadata(new StreamReader(new MemoryStream(Properties.Resources.BitChecker_SayHelloScript)));
-
-                var existingScript = StoredProcs.Scripts_GetScripts(((ScriptTypeBase)scriptType).ScriptTypeCode, "Y")
-                    .Execute()
-                    .FirstOrDefault(s => s.Script_Name.Equals("Say Hello to Inedo", StringComparison.OrdinalIgnoreCase));
-
-                int? scriptId;
-                if (existingScript != null)
-                {
-                    scriptId = existingScript.Script_Id;
-                }
-                else
-                {
-                    scriptId = StoredProcs.Scripts_CreateOrUpdateScript(null, "Say Hello to Inedo", metadata.Description, ((ScriptTypeBase)scriptType).ScriptTypeCode, "Y", "Y").Execute();
-                    StoredProcs.Scripts_CreateVersion(1, scriptId, Properties.Resources.BitChecker_SayHelloScript).Execute();
-                    foreach (var param in metadata.Parameters)
-                        StoredProcs.Scripts_CreateOrUpdateParameter(scriptId, param.Name, Domains.ScriptParameterTypes.Standard, null, param.Description).Execute();
-                }
-
-                AddAction(planId,
-                    (ActionBase)Util.Recipes.Munging.MungeInstance("Inedo.BuildMasterExtensions.Windows.Shell.ExecutePowerShellScriptAction,Windows",
-                    new
-                    {
-                        ScriptId = scriptId,
-                        LogResults = true,
-                        LogErrorsAsWarnings = false,
-                        ParameterValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                        {
-                            { "License Key", string.Join(",", StoredProcs.LicenseKeys_GetLicenseKeys()
-                                                .Execute()
-                                                .Select(k => k.LicenseKey_Text.Remove(5, 27).Insert(5, "..."))) }
-                        }
-                    }));
-            }
-
-            // Other Environments
-            for (int i = 1; i < WorkflowSteps.Length; i++)
-            {
-                int environmentId = WorkflowSteps[i];
-                string environmentName = StoredProcs.Environments_GetEnvironment(environmentId).ExecuteDataRow()[TableDefs.Environments.Environment_Name].ToString();
-
-                // Deploy Web
-                planId = CreatePlan("Web", environmentId, "Deploy Web", Properties.Resources.BitChecker_DeployWeb);
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.Artifacts.DeployArtifactAction", new
-                    {
-                        ArtifactName = "Web",
-                        OverriddenTargetDirectory = Path.Combine(this.DeploymentPath, environmentName)
-                    }));
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.Configuration.DeployConfigurationFileAction", new
-                    {
-                        ConfigurationFileId = configurationFileId,
-                        InstanceName = environmentName,
-                        OverriddenSourceDirectory = Path.Combine(this.DeploymentPath, environmentName)
-                    }));
-
-                // Deploy Database
-                planId = CreatePlan("Database", environmentId, "Deploy Database", Properties.Resources.BitChecker_DeployDatabase);
-                AddAction(planId, Util.Recipes.Munging.MungeCoreExAction(
-                    "Inedo.BuildMaster.Extensibility.Actions.Database.ExecuteDatabaseChangeScriptsAction", new
-                    {
-                        ProviderId = databaseProviderId
-                    }));
-            }
+            this.CreateBuildDeploymentPlan();
+            for (int i = 0; i < this.WorkflowSteps.Length; i++)
+                this.CreateEnvironmentDeploymentPlan(i, databaseProviderId);
         }
 
+        private static int CreateScript()
+        {
+            var scriptType = (IScriptMetadataReader)Activator.CreateInstance(Type.GetType("Inedo.BuildMasterExtensions.Windows.Scripting.PowerShell.PowerShellScriptType,Windows"));
+            var metadata = scriptType.GetScriptMetadata(new StreamReader(new MemoryStream(Properties.Resources.BitChecker_SayHelloScript)));
+
+            var existingScript = StoredProcs.Scripts_GetScripts(((ScriptTypeBase)scriptType).ScriptTypeCode, "Y")
+                .Execute()
+                .FirstOrDefault(s => s.Script_Name.Equals("Say Hello to Inedo", StringComparison.OrdinalIgnoreCase));
+
+            int scriptId;
+            if (existingScript != null)
+            {
+                scriptId = existingScript.Script_Id;
+            }
+            else
+            {
+                scriptId = (int)StoredProcs.Scripts_CreateOrUpdateScript(null, "Say Hello to Inedo", metadata.Description, ((ScriptTypeBase)scriptType).ScriptTypeCode, "Y", "Y").Execute();
+                StoredProcs.Scripts_CreateVersion(1, scriptId, Properties.Resources.BitChecker_SayHelloScript).Execute();
+                foreach (var param in metadata.Parameters)
+                    StoredProcs.Scripts_CreateOrUpdateParameter(scriptId, param.Name, Domains.ScriptParameterTypes.Standard, null, param.Description).Execute();
+            }
+
+            return scriptId;
+        }
+        private void CreateBuildDeploymentPlan()
+        {
+            var licenseKey = string.Join(
+                ",",
+                StoredProcs.LicenseKeys_GetLicenseKeys().Execute().Select(k => k.LicenseKey_Text.Remove(5, 27).Insert(5, "..."))
+            );
+
+            var reader = XmlReader.Create(
+                new StringReader(
+                    Replacer.Replace(
+                        Properties.Resources.BitChecker_Build_Plan,
+                        new Dictionary<string, string>
+                        {
+                            { "ApplicationId", this.ApplicationId.ToString() },
+                            { "LicenseKey", licenseKey }
+                        }
+                    )
+                )
+            );
+
+            int buildPlanId = Util.Plans.ImportFromXml(reader);
+
+            StoredProcs.Workflows_SetBuildStep(
+                Workflow_Id: this.WorkflowId,
+                Build_DeploymentPlan_Id: buildPlanId,
+                BuildImporterTemplate_Configuration: null
+            ).Execute();
+        }
+        private void CreateEnvironmentDeploymentPlan(int step, int databaseProviderId)
+        {
+            var environment = StoredProcs.Environments_GetEnvironment(this.WorkflowSteps[step])
+                .Execute()
+                .Environments
+                .First();
+
+            var reader = XmlReader.Create(
+                new StringReader(
+                    Replacer.Replace(
+                        Properties.Resources.BitChecker_Environment_Plan,
+                        new Dictionary<string, string>
+                        {
+                            { "Environment", environment.Environment_Name },
+                            { "DatabaseProviderId", databaseProviderId.ToString() }
+                        }
+                    )
+                )
+            );
+
+            int planId = Util.Recipes.CreateDeploymentPlanForWorkflowStep(this.WorkflowId, step + 1);
+            Util.Plans.ImportFromXml(planId, reader);
+        }
         private void CreateApproval()
         {
             int? directoryProviderId = InedoLib.Util.Int.ParseN(StoredProcs.Configuration_GetValue("CoreEx", "DirectoryProvider", null).Execute());
@@ -325,19 +218,13 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
             if (admin == null)
                 return;
 
-            StoredProcs.Workflows_AddOrRemoveApproval(
-                this.WorkflowId,
-                this.WorkflowSteps[1],
-                null,
-                admin.User_Name,
-                "Approved by Admin",
-                "U",
-                Domains.YN.No,
-                null,
-                "A",
-                Domains.YN.No).Execute();
+            StoredProcs.Promotions_CreateOrUpdateRequirement(
+                Environment_Id: this.WorkflowSteps[0],
+                Requirement_Description: "Approved by Admin",
+                Workflow_Id: this.WorkflowId,
+                Principal_Name: "Admin"
+            ).Execute();
         }
-
         public void CreateDashboards()
         {
             // application dashboard
@@ -448,61 +335,6 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 configFileXml
             ).ExecuteNonQuery();
         }
-        private static int AddAction(int planId, ActionBase action)
-        {
-            var actionNameProvider = action as IActionNameProvider;
-
-            var proc = StoredProcs.Plans_CreateOrUpdateAction(
-                planId,
-                null,
-                action is AgentBasedActionBase ? (int?)1 : null,
-                null,
-                action.ToString(),
-                Domains.YN.No,
-                Util.Persistence.SerializeToPersistedObjectXml(action),
-                actionNameProvider != null 
-                    ? actionNameProvider.ActionName
-                    : Util.Reflection.GetCustomAttribute<ActionPropertiesAttribute>(action.GetType()).Name,
-                Domains.YN.Yes,
-                0,
-                "N",
-                null,
-                null,
-                null
-            );
-
-            proc.ExecuteNonQuery();
-
-            return proc.Action_Sequence.Value;
-        }
-        private static int AddTransferFilesAction(int planId, object properties)
-        {
-            var action = Util.Recipes.Munging.MungeCoreExAction(
-                "Inedo.BuildMaster.Extensibility.Actions.Files.TransferFilesAction",
-                properties
-            );
-
-            var desc = action.GetActionDescription();
-            var shortDesc = desc.ShortDescription != null ? desc.ShortDescription.ToString() : null;
-            var longDesc = desc.LongDescription != null ? desc.LongDescription.ToString() : null;
-
-            var proc = StoredProcs.Plans_CreateOrUpdateAction(
-                ActionGroup_Id: planId,
-                Server_Id: 1,
-                Short_Description: shortDesc,
-                Long_Description: longDesc,
-                ResumeNextOnFailure_Indicator: Domains.YN.No,
-                Action_Configuration: Util.Persistence.SerializeToPersistedObjectXml(action),
-                Active_Indicator: Domains.YN.Yes,
-                Retry_Count: 0,
-                LogFailureAsWarning_Indicator: Domains.YN.No,
-                Target_Server_Id: 1
-            );
-
-            proc.ExecuteNonQuery();
-
-            return proc.Action_Sequence.Value;
-        }
         private static void AddGadget(int dashboardId, int zone, object gadget)
         {
             StoredProcs.Dashboards_CreateOrUpdateGadget(
@@ -515,16 +347,11 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 Util.Persistence.SerializeToPersistedObjectXml(gadget)
             ).ExecuteNonQuery();
         }
-
         private static void CreateBuild(HttpContext context)
         {
             int applicationId = int.Parse(context.Request.QueryString["applicationId"]);
 
-            var webUserContextType = Type.GetType("Inedo.BuildMaster.Web.Security.WebUserContext,BuildMaster", true);
-            var canPerformTask = webUserContextType
-                .GetMethods()
-                .First(m => m.Name == "CanPerformTask" && m.GetParameters().Length == 5);
-            if (!(bool)canPerformTask.Invoke(null, new object[] { 6 /*Builds_CreateBuild*/, null, applicationId, null, null }))
+            if (!WebUserContext.CanPerformTask(SecuredTask.Builds_CreateBuild, applicationId: applicationId))
                 throw new SecurityException();
 
             var release = StoredProcs.Releases_GetReleases(applicationId, Domains.ReleaseStatus.Active, 1).Execute().First();
@@ -539,7 +366,8 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                 BuildVariables_Xml: null,
                 PromotionVariables_Xml: null,
                 ExecutionVariables_Xml: null,
-                Build_Number: null
+                Build_Number: null,
+                BuildImporter_Configuration: null
             ).Execute();
 
             context.Response.Redirect(
@@ -550,20 +378,6 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
                     Uri.EscapeDataString(buildNumber)
                 )
             );
-        }
-
-        private int CreatePlan(string deployableName, int environmentId, string planName, string planDesc)
-        {
-            var proc = StoredProcs.Plans_CreateDeploymentPlanActionGroup(
-                Environment_Id: environmentId,
-                Application_Id: this.ApplicationId,
-                Deployable_Name: deployableName,
-                Active_Indicator: Domains.YN.Yes,
-                ActionGroup_Name: planName,
-                ActionGroup_Description: planDesc
-            );
-            proc.ExecuteNonQuery();
-            return proc.ActionGroup_Id.Value;
         }
     }
 }

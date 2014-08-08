@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DeploymentPlan xmlns="http://inedo.com/schemas/buildmaster/2014/05/bmxplan">
+  <Servers>
+    <Server Id="1" LastModified="2000-01-01T00:00:00Z">BUILDMASTER</Server>
+  </Servers>
+  <Providers />
+  <ActionGroup DeploymentPlanActionGroupId="1" DeploymentPlanActionGroupSequence="1" ActionGroupId="1" Active="Y" Shared="N" Parallel="N" IterateServers="N" IterateDeployables="N" OnFailureContinue="N" DeployableName="Web">
+    <Name>Source</Name>
+    <Description>Applies a label to source control, then gets source code by that label and set the version attribute in AssemblyInfo.cs to the release and build numbers.</Description>
+    <Actions>
+      <Action ActionSequence="1" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Apply Label" Description="Applies a label to source files in the repository.">
+        <Inedo.BuildMaster.Extensibility.Actions.SourceControl.ApplyLabelAction Assembly="BuildMasterExtensions">
+          <Properties UserDefinedLabel="$ReleaseNumber.$BuildNumber" SourcePath="/TRUNK/BitChecker/" ProviderId="3" />
+        </Inedo.BuildMaster.Extensibility.Actions.SourceControl.ApplyLabelAction>
+      </Action>
+      <Action ActionSequence="2" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Get Labeled" Description="Gets the version of code with the specified label.">
+        <Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction Assembly="BuildMasterExtensions">
+          <Properties UserDefinedLabel="$ReleaseNumber.$BuildNumber" SourcePath="/TRUNK/BitChecker/" ClearTargetDirectory="False" ProviderId="3" />
+        </Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction>
+      </Action>
+      <Action ActionSequence="3" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Write Assembly Versions" Description="Updates AssemblyVersion, AssemblyFileVersion, and AssemblyInformationalVersion Attributes (in AssemblyInfo source files).">
+        <Inedo.BuildMasterExtensions.WindowsSdk.DotNet.WriteAssemblyInfoVersionsAction Assembly="WindowsSdk">
+          <Properties FileMasks="*\AssemblyInfo.cs" Recursive="True" Version="$ReleaseNumber.$BuildNumber" />
+        </Inedo.BuildMasterExtensions.WindowsSdk.DotNet.WriteAssemblyInfoVersionsAction>
+      </Action>
+    </Actions>
+  </ActionGroup>
+  <ActionGroup DeploymentPlanActionGroupId="2" DeploymentPlanActionGroupSequence="2" ActionGroupId="2" Active="Y" Shared="N" Parallel="N" IterateServers="N" IterateDeployables="N" OnFailureContinue="N" DeployableName="Web">
+    <Name>Compare Source</Name>
+    <Description>Generates a report listing all of the source-code changes since the last deployed release. This report will be accessible on the Build page.</Description>
+    <Actions>
+      <Action ActionSequence="1" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Get Labeled" Description="Gets the version of code with the specified label.">
+        <Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction Assembly="BuildMasterExtensions">
+          <Properties UserDefinedLabel="$PreviousReleaseNumber.$PreviousBuildNumber" SourcePath="/TRUNK/BitChecker/" ClearTargetDirectory="False" ProviderId="3" OverriddenTargetDirectory="PrevSrc" />
+        </Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction>
+      </Action>
+      <Action ActionSequence="2" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Get Labeled" Description="Gets the version of code with the specified label.">
+        <Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction Assembly="BuildMasterExtensions">
+          <Properties UserDefinedLabel="$ReleaseNumber.$BuildNumber" SourcePath="/TRUNK/BitChecker/" ClearTargetDirectory="False" ProviderId="3" OverriddenTargetDirectory="CurrentSrc" />
+        </Inedo.BuildMaster.Extensibility.Actions.SourceControl.GetLabeledAction>
+      </Action>
+      <Action ActionSequence="3" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Attach Directory Comparison Report" Description="Shows the files and subdirectories that have been modified or deleted between two directories.">
+        <Inedo.BuildMaster.Extensibility.Actions.Reporting.CompareDirectoriesReportingAction Assembly="BuildMasterExtensions">
+          <Properties Path1="PrevSrc" Path2="CurrentSrc" IncludeUnchanged="False" OutputName="Changes between $PreviousReleaseNumber.$PreviousBuildNumber and $ReleaseNumber.$BuildNumber" />
+        </Inedo.BuildMaster.Extensibility.Actions.Reporting.CompareDirectoriesReportingAction>
+      </Action>
+    </Actions>
+  </ActionGroup>
+  <ActionGroup DeploymentPlanActionGroupId="3" DeploymentPlanActionGroupSequence="3" ActionGroupId="3" Active="Y" Shared="N" Parallel="N" IterateServers="N" IterateDeployables="N" OnFailureContinue="N" DeployableName="Web">
+    <Name>Build</Name>
+    <Description>Builds the application using the source code retrieved in the previous action group.</Description>
+    <Actions>
+      <Action ActionSequence="1" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Build MSBuild Project" Description="Builds a project or solution using MSBuild.">
+        <Inedo.BuildMasterExtensions.WindowsSdk.MSBuild.BuildMSBuildProjectAction Assembly="WindowsSdk">
+          <Properties ProjectBuildConfiguration="Debug" ProjectPath="BitChecker.csproj" IsWebProject="True" BuildToProjectConfigSubdirectories="False" />
+        </Inedo.BuildMasterExtensions.WindowsSdk.MSBuild.BuildMSBuildProjectAction>
+      </Action>
+      <Action ActionSequence="2" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Create Build Artifact" Description="Collects all of the files in a directory, compresses them in a zip file, and saves it to the artifact library.">
+        <Inedo.BuildMaster.Extensibility.Actions.Artifacts.CreateArtifactAction Assembly="BuildMasterExtensions">
+          <Properties ArtifactName="Web" />
+        </Inedo.BuildMaster.Extensibility.Actions.Artifacts.CreateArtifactAction>
+      </Action>
+    </Actions>
+  </ActionGroup>
+  <ActionGroup DeploymentPlanActionGroupId="4" DeploymentPlanActionGroupSequence="4" ActionGroupId="4" Active="Y" Shared="N" Parallel="N" IterateServers="N" IterateDeployables="N" OnFailureContinue="N" DeployableName="Web">
+    <Name>Unit Tests</Name>
+    <Description>Runs automated unit tests on the compiled application. The execution will fail if any unit test indicates an error.</Description>
+    <Actions>
+      <Action ActionSequence="1" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Execute Unit Tests" Description="Run Unit Tests on BitChecker.">
+        <Inedo.BuildMasterExtensions.DotNetRecipes.Actions.ExampleUnitTestAction Assembly="DotNetRecipes">
+          <Properties BitCheckerApplicationId="$[ApplicationId]" />
+        </Inedo.BuildMasterExtensions.DotNetRecipes.Actions.ExampleUnitTestAction>
+      </Action>
+    </Actions>
+  </ActionGroup>
+  <ActionGroup DeploymentPlanActionGroupId="7" DeploymentPlanActionGroupSequence="7" ActionGroupId="7" Active="Y" Shared="N" Parallel="N" IterateServers="N" IterateDeployables="N" OnFailureContinue="N" DeployableName="Web">
+    <Name>Say Hello to Inedo</Name>
+    <Description>Runs a sample script that pings inedo.com.</Description>
+    <Actions>
+      <Action ActionSequence="1" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Say Hello to Inedo (Windows PowerShell)" Description="License Key: $[LicenseKey]">
+        <Inedo.BuildMasterExtensions.Windows.Shell.ExecutePowerShellScriptAction Assembly="Windows">
+          <Properties ScriptMode="Library" ScriptData="1" LogResults="True">
+            <ParameterValues>
+              <Arg Name="License Key">$[LicenseKey]</Arg>
+            </ParameterValues>
+          </Properties>
+        </Inedo.BuildMasterExtensions.Windows.Shell.ExecutePowerShellScriptAction>
+      </Action>
+    </Actions>
+  </ActionGroup>
+</DeploymentPlan>

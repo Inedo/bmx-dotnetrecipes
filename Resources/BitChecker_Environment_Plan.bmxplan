@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DeploymentPlan xmlns="http://inedo.com/schemas/buildmaster/2014/05/bmxplan">
+  <Servers>
+    <Server Id="1" LastModified="2000-01-01T00:00:00Z">BUILDMASTER</Server>
+  </Servers>
+  <Providers />
+  <ActionGroup DeploymentPlanActionGroupId="8" DeploymentPlanActionGroupSequence="1" ActionGroupId="8" Active="Y" Shared="N" Parallel="N" IterateServers="N" IterateDeployables="N" OnFailureContinue="N" DeployableName="Web">
+    <Name>Deploy Web</Name>
+    <Description>Deploys the built application and its configuration files to the target directory.</Description>
+    <Actions>
+      <Action ActionSequence="1" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Deploy Build Artifact" Description="Retrieves the specified artifact from the artifact library and deploys it to a directory.">
+        <Inedo.BuildMaster.Extensibility.Actions.Artifacts.DeployArtifactAction Assembly="BuildMasterExtensions">
+          <Properties ArtifactName="Web" DeployAsZipFile="False" DoNotClearTargetDirectory="True" LogIndividualFiles="False" OverriddenTargetDirectory="C:\BuildMaster\Demos\BitChecker\$[Environment]" />
+        </Inedo.BuildMaster.Extensibility.Actions.Artifacts.DeployArtifactAction>
+      </Action>
+      <Action ActionSequence="2" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Deploy Configuration File" Description="Deploys an instance of a configuration file to disk.">
+        <Inedo.BuildMaster.Extensibility.Actions.Configuration.DeployConfigurationFileAction Assembly="BuildMasterExtensions">
+          <Properties InstanceName="$[Environment]" ApplyExecutionTimeVariables="False" OverriddenSourceDirectory="C:\BuildMaster\Demos\BitChecker\$[Environment]" />
+        </Inedo.BuildMaster.Extensibility.Actions.Configuration.DeployConfigurationFileAction>
+      </Action>
+    </Actions>
+  </ActionGroup>
+  <ActionGroup DeploymentPlanActionGroupId="9" DeploymentPlanActionGroupSequence="2" ActionGroupId="9" Active="Y" Shared="N" Parallel="N" IterateServers="N" IterateDeployables="N" OnFailureContinue="N" DeployableName="Database">
+    <Name>Deploy Database</Name>
+    <Description>Deploys database schema changes to the target environment.</Description>
+    <Actions>
+      <Action ActionSequence="1" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Execute Database Change Scripts" Description="Executes change scripts associated with the current release and any change scripts from prior releases that have not been run against the database to date.">
+        <Inedo.BuildMaster.Extensibility.Actions.Database.ExecuteDatabaseChangeScriptsAction Assembly="BuildMasterExtensions">
+          <Properties InitializeDatabase="False" ProviderId="$[DatabaseProviderId]" />
+        </Inedo.BuildMaster.Extensibility.Actions.Database.ExecuteDatabaseChangeScriptsAction>
+      </Action>
+    </Actions>
+  </ActionGroup>
+</DeploymentPlan>
