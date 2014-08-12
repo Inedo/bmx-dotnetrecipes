@@ -15,7 +15,7 @@
       </Action>
       <Action ActionSequence="2" ServerId="1" RetryCount="0" Active="Y" ResumeNextOnFailure="N" LogFailureAsWarning="N" Name="Deploy Configuration File" Description="Deploys an instance of a configuration file to disk.">
         <Inedo.BuildMaster.Extensibility.Actions.Configuration.DeployConfigurationFileAction Assembly="BuildMasterExtensions">
-          <Properties InstanceName="$[Environment]" ApplyExecutionTimeVariables="False" OverriddenSourceDirectory="C:\BuildMaster\Demos\BitChecker\$[Environment]" />
+          <Properties ConfigurationFileName="web_appsettings.config" InstanceName="$[Environment]" ApplyExecutionTimeVariables="False" OverriddenSourceDirectory="C:\BuildMaster\Demos\BitChecker\$[Environment]" />
         </Inedo.BuildMaster.Extensibility.Actions.Configuration.DeployConfigurationFileAction>
       </Action>
     </Actions>
