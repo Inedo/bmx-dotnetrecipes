@@ -148,4 +148,7 @@
   <data name="BitChecker_Environment_Plan" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\BitChecker_Environment_Plan.bmxplan;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="web_appsettings" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\web_appsettings.config;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
 </root>

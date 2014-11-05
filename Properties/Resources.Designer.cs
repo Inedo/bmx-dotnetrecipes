@@ -166,5 +166,18 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes.Properties {
                 return ResourceManager.GetString("BitChecker_UnitTests", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+        ///&lt;appSettings&gt;
+        ///  &lt;add key=&quot;ContactFormRecipient&quot; value=&quot;$ContactFormRecipient&quot; /&gt;
+        ///  &lt;add key=&quot;SmtpServer&quot; value=&quot;$SmtpServer&quot; /&gt;
+        ///&lt;/appSettings&gt;.
+        /// </summary>
+        internal static string web_appsettings {
+            get {
+                return ResourceManager.GetString("web_appsettings", resourceCulture);
+            }
+        }
     }
 }

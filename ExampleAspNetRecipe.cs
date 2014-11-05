@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
 using System.Security;
 using System.Text;
 using System.Web;
 using System.Xml;
+using System.Xml.Linq;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Data;
 using Inedo.BuildMaster.Extensibility.Gadgets;
@@ -52,8 +52,8 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
         {
             var workflowSteps = StoredProcs
                 .Workflows_GetWorkflow(this.WorkflowId)
-                .ExecuteDataSet(TableNames.Workflows_Extended, TableNames.WorkflowSteps_Extended)
-                .Tables[TableNames.WorkflowSteps_Extended];
+                .Execute()
+                .WorkflowSteps_Extended;
 
             int deployableId;
             int databaseDeployableId;
@@ -94,19 +94,53 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
 
             int configurationFileId;
             {
-                var proc = StoredProcs.ConfigurationFiles_CreateConfigurationFile(null, deployableId, "web_appsettings.config");
+                var proc = StoredProcs.ConfigurationFiles_CreateConfigurationFile(null, deployableId, "web_appsettings.config", null, null);
                 proc.ExecuteNonQuery();
                 configurationFileId = proc.ConfigurationFile_Id.Value;
+
+                StoredProcs.ConfigurationFiles_CreateConfigurationFileInstance(
+                    ConfigurationFile_Id: configurationFileId,
+                    Instance_Name: "Template",
+                    Environment_Id: null,
+                    Template_Indicator: Domains.YN.Yes,
+                    Template_Instance_Name: null,
+                    TransformType_Code: Domains.ConfigurationFileTransformTypeCodes.KeyValuePair
+                ).Execute();
             }
-            foreach (DataRow dr in workflowSteps.Rows)
+
+            foreach (var step in workflowSteps)
             {
-                CreateConfigFileInstance(
-                    releaseNumber,
-                    configurationFileId,
-                    dr[TableDefs.WorkflowSteps_Extended.Environment_Name].ToString(),
-                    (int)dr[TableDefs.WorkflowSteps_Extended.Environment_Id]
-                );
+                StoredProcs.ConfigurationFiles_CreateConfigurationFileInstance(
+                    ConfigurationFile_Id: configurationFileId,
+                    Instance_Name: step.Environment_Name,
+                    Environment_Id: step.Environment_Id,
+                    Template_Indicator: Domains.YN.No,
+                    Template_Instance_Name: "Template",
+                    TransformType_Code: null
+                ).Execute();
             }
+
+            var utf8 = new UTF8Encoding(false);
+
+            StoredProcs.ConfigurationFiles_CreateConfigurationFileVersions(
+                ConfigurationFile_Id: configurationFileId,
+                ConfigurationFiles_Xml: new XDocument(
+                        new XElement("ConfigFiles",
+                            from s in workflowSteps
+                            select new XElement("Version",
+                                new XAttribute("Instance_Name", s.Environment_Name),
+                                new XAttribute("VersionNotes_Text", "Created automatically."),
+                                new XAttribute("File_Bytes", Convert.ToBase64String(utf8.GetBytes(string.Format("ContactFormRecipient=contact-form-{0}@example.com\r\nSmtpServer={0}-mail-server", s.Environment_Name.ToLowerInvariant()))))
+                            ),
+                            new XElement("Version",
+                                new XAttribute("Instance_Name", "Template"),
+                                new XAttribute("VersionNotes_Text", "Created automatically."),
+                                new XAttribute("File_Bytes", Convert.ToBase64String(utf8.GetBytes(Properties.Resources.web_appsettings)))
+                            )
+                        )
+                    ).ToString(SaveOptions.DisableFormatting),
+                ReleaseNumbers_Csv: "1.1"
+            ).Execute();
 
             int databaseProviderId;
             {
@@ -284,57 +318,6 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes
             }
         }
 
-        private static void CreateConfigFileInstance(string releaseNumber, int configurationFileId, string environmentName, int environentId)
-        {
-            StoredProcs.ConfigurationFiles_CreateConfigurationFileInstance(
-                configurationFileId,
-                environmentName,
-                environentId,
-                Domains.YN.No,
-                null).ExecuteNonQuery();
-
-            string configFileXml;
-
-            using (var configBuffer = new MemoryStream())
-            using (var configFileWriter = XmlWriter.Create(configBuffer, new XmlWriterSettings { Encoding = Encoding.UTF8, Indent = true }))
-            {
-                configFileWriter.WriteStartElement("appSettings");
-
-                configFileWriter.WriteStartElement("add");
-                configFileWriter.WriteAttributeString("key", "ContactFormRecipient");
-                configFileWriter.WriteAttributeString("value", "contact-form-" + environmentName + "@example.com");
-                configFileWriter.WriteEndElement();
-
-                configFileWriter.WriteStartElement("add");
-                configFileWriter.WriteAttributeString("key", "SmtpServer");
-                configFileWriter.WriteAttributeString("value", environmentName + "-mail-server");
-                configFileWriter.WriteEndElement();
-
-                configFileWriter.WriteEndElement();
-
-                configFileWriter.Flush();
-
-                var filesBuffer = new StringBuilder();
-                using (var filesWriter = XmlWriter.Create(filesBuffer, new XmlWriterSettings { Encoding = Encoding.Unicode, Indent = false, NewLineChars = "" }))
-                {
-                    filesWriter.WriteStartElement("ConfigFiles");
-                    filesWriter.WriteStartElement("Version");
-                    filesWriter.WriteAttributeString("Instance_Name", environmentName);
-                    filesWriter.WriteAttributeString("VersionNotes_Text", "Created automatically.");
-                    filesWriter.WriteAttributeString("Release_Number", releaseNumber);
-                    filesWriter.WriteAttributeString("File_Bytes", Convert.ToBase64String(configBuffer.ToArray()));
-                    filesWriter.WriteEndElement();
-                    filesWriter.WriteEndElement();
-                }
-
-                configFileXml = filesBuffer.ToString();
-            }
-
-            StoredProcs.ConfigurationFiles_CreateConfigurationFileVersions(
-                configurationFileId,
-                configFileXml
-            ).ExecuteNonQuery();
-        }
         private static void AddGadget(int dashboardId, int zone, object gadget)
         {
             StoredProcs.Dashboards_CreateOrUpdateGadget(
