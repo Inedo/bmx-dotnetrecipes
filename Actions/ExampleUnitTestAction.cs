@@ -3,6 +3,7 @@ using System.Threading;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Actions;
 using Inedo.BuildMaster.Extensibility.Actions.Testing;
+using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Web;
 
 namespace Inedo.BuildMasterExtensions.DotNetRecipes.Actions
@@ -12,6 +13,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes.Actions
         "Runs unit tests on a project.")]
     [Tag("Testing")]
     [CustomEditor(typeof(ExampleUnitTestActionEditor))]
+    [RequiresInterface(typeof(IFileOperationsExecuter))]
     internal sealed class ExampleUnitTestAction : UnitTestActionBase
     {
         // This is just here to ensure that an error occurs if this action gets copied or shared
