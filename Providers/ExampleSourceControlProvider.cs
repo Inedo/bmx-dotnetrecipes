@@ -14,17 +14,7 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes.Providers
         "Contains the source code for sample applications.")]
     internal sealed class ExampleSourceControlProvider : SourceControlProviderBase, ILabelingProvider, IRevisionProvider
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ExampleSourceControlProvider"/> class.
-        /// </summary>
-        public ExampleSourceControlProvider()
-        {
-        }
-
-        public override char DirectorySeparator
-        {
-            get { return '/'; }
-        }
+        public override char DirectorySeparator => '/';
 
         public override void GetLatest(string sourcePath, string targetPath)
         {

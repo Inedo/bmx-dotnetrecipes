@@ -11,13 +11,6 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes.Providers
     {
         private const long NumericReleaseNumber10 = 2821109907456;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ExampleDatabaseProvider"/> class.
-        /// </summary>
-        public ExampleDatabaseProvider()
-        {
-        }
-
         public override void ExecuteQueries(string[] queries)
         {
         }
@@ -62,18 +55,9 @@ namespace Inedo.BuildMasterExtensions.DotNetRecipes.Providers
             return "Sample database provider for use only with example applications.";
         }
 
-        /// <summary>
-        /// Represents a change script.
-        /// </summary>
         [Serializable]
         private sealed class ExampleChangeScript : ChangeScript
         {
-            /// <summary>
-            /// Initializes a new instance of the <see cref="ExampleChangeScript"/> class.
-            /// </summary>
-            /// <param name="scriptId">The script id.</param>
-            /// <param name="scriptName">Name of the script.</param>
-            /// <param name="executionDate">The execution date.</param>
             public ExampleChangeScript(int scriptId, string scriptName, DateTime executionDate)
                 : base(NumericReleaseNumber10, scriptId, scriptName, executionDate, true)
             {

@@ -1,38 +1,28 @@
-﻿using System.IO;
-using Inedo.BuildMaster.Configuration;
+﻿using Inedo.BuildMaster.Configuration;
 using Inedo.BuildMaster.Extensibility.Recipes;
 using Inedo.BuildMaster.Web.Controls;
 using Inedo.BuildMaster.Web.Controls.Extensions;
+using Inedo.IO;
+using Inedo.Web.Controls;
 
 namespace Inedo.BuildMasterExtensions.DotNetRecipes
 {
-    public sealed class ExampleAspNetRecipeEditor : RecipeEditorBase
+    internal sealed class ExampleAspNetRecipeEditor : RecipeEditorBase
     {
-        SourceControlFileFolderPicker txtDeploymentPath;
-
-        public ExampleAspNetRecipeEditor()
-        {
-        }
+        private SourceControlFileFolderPicker txtDeploymentPath;
 
         protected override void CreateChildControls()
         {
-            // txtDeploymentPath
-            txtDeploymentPath = new SourceControlFileFolderPicker
+            this.txtDeploymentPath = new SourceControlFileFolderPicker
             {
-                Text = Path.Combine(
-                    Directory.GetParent(CoreConfig.BaseWorkingDirectory).FullName,
-                    Path.Combine("Demos", "BitChecker")),
+                Text = PathEx.Combine(PathEx.GetDirectoryName(CoreConfig.BaseWorkingDirectory), "Demos", "BitChecker"),
                 Required = true,
                 ServerId = 1
             };
 
-            CUtil.Add(this,
-                new FormFieldGroup(
-                    "Deployment Base Path",
-                    "The root path where items will be deployed. Under this directory, a directory will be created for each environment in the workflow.",
-                    true,
-                    new StandardFormField("Path:", txtDeploymentPath))
-                );
+            this.Controls.Add(
+                new SlimFormField("Deployment path:", this.txtDeploymentPath)
+            );
         }
 
         public override RecipeBase CreateFromForm()
